@@ -16,6 +16,23 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "dialog":{
+        "message": true,
+        "open": true,
+        "confirm": true
+
+      },
+      "path":{
+        "all": true
+      },
+      "fs": {
+        
+        "readFile": true,
+        "removeFile": true,
+        "renameFile": true,
+        "writeFile": true,
+        "scope": ["$DOCUMENT/*", "$DESKTOP/**/**"]
       }
     },
     "bundle": {
@@ -41,8 +58,8 @@
         "fullscreen": false,
         "resizable": true,
         "title": "gestor-de-programa",
-        "width": 800,
-        "height": 600
+        "width": 1100,
+        "height": 700
       }
     ]
   }

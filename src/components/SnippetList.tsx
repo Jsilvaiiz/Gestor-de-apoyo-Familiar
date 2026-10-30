@@ -3,7 +3,7 @@ import React from 'react'
 function SnippetList() {
   return (
     <div>
-      
+      SnippetList
     </div>
   )
 }
