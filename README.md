@@ -8,3 +8,6 @@ This template should help get you started developing with Tauri, React and Types
 
 
 snippetfiles es para leer y escribir archivos
+
+correr
+npm run tauri dev

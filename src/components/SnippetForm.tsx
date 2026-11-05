@@ -1,10 +1,13 @@
 import React from 'react'
-import {writeFile, readTextFile} from '@tauri-apps/api/fs'
-import {desktopDir} from '@tauri-apps/api/path'
+import {writeFile} from '@tauri-apps/api/fs'
+import {join} from '@tauri-apps/api/path'
 import {useState} from 'react'
+import {useSnippetStore} from '../store/snippetStore'
+import {ensureSnippetsDirectory} from '../utils/snippets'
 
 function SnippetForm() {
   const[snippetName, setSnippetName] = useState("")
+  const addSnippetName = useSnippetStore((state) => state.addSnippetName)
   return (
     <>
     <form onSubmit={async (e)=>{
@@ -14,15 +17,12 @@ function SnippetForm() {
         alert("El nombre del snippet no puede estar vacío")
         return
       }
-      //if snippet(){} // lo continuo despues
-      const desktopPath = await desktopDir()
-      console.log(desktopPath)
-      //alert("Alerta")
-      await writeFile(`${desktopPath}/informaciónFamilias/${snippetName}.css`, "{}")
+      const directory = await ensureSnippetsDirectory()
+      await writeFile(await join(directory, snippetName), "{}")
       setSnippetName("")
-      //desktopDir().
+      addSnippetName(snippetName)
     }}>
-      <input type="text" placeholder="Escribe algo" className= "bg-zinc-900 text-white placeholder:text-gray-500 border-none focus:outline-none"
+      <input type="text" placeholder="Escribe algo" className= "bg-zinc-900 text-white placeholder:text-gray-500 focus:outline-none"
       onChange={(e) => setSnippetName(e.target.value)} 
       value = {snippetName}
       />

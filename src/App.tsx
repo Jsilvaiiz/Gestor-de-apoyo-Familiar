@@ -1,7 +1,6 @@
 import React from 'react';
-import SnippetEdit from './components/SnippetEdit';
+import SnippetEdit from './components/SnippetEditor';
 import SnippetForm from './components/SnippetForm';
-import SnippetItem from './components/SnippetItem';
 import SnippetList from './components/SnippetList';
 
 function App() {
@@ -11,14 +10,13 @@ function App() {
       <div className ="col-span-3 bg-zinc-900 text-white ">
 
         <SnippetForm />
+        <SnippetList />
 
       </div>
 
       <div className="col-span-9 bg-gray-900 text-white h-screen items-center justify-center text-center">
-
         <SnippetEdit />
-        <SnippetList />
-        <SnippetItem />  
+
       </div> 
 
     </div>

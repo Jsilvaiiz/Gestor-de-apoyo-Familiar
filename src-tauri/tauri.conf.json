@@ -27,7 +27,8 @@
         "all": true
       },
       "fs": {
-        
+        "readDir": true,
+        "createDir": true,
         "readFile": true,
         "removeFile": true,
         "renameFile": true,
