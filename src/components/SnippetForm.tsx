@@ -22,7 +22,7 @@ function SnippetForm() {
       setSnippetName("")
       addSnippetName(snippetName)
     }}>
-      <input type="text" placeholder="Escribe algo" className= "bg-zinc-900 text-white placeholder:text-gray-500 focus:outline-none"
+      <input type="text" placeholder="Escribe algo" className= "border border-zinc-500! rounded-none! shadow-none! bg-transparent! text-white placeholder:text-gray-500 focus:outline-none"
       onChange={(e) => setSnippetName(e.target.value)} 
       value = {snippetName}
       />
