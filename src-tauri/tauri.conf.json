@@ -33,7 +33,8 @@
         "removeFile": true,
         "renameFile": true,
         "writeFile": true,
-        "scope": ["$DOCUMENT/*", "$DESKTOP/**/**"]
+        "scope": ["$DOCUMENT/*", "$DESKTOP/**/**", "$APPDATA/familias", "$APPDATA/familias/**"],
+        "exists": true
       }
     },
     "bundle": {

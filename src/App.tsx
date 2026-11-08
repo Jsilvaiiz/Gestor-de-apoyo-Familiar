@@ -3,6 +3,10 @@ import SnippetEdit from './components/SnippetEditor';
 import SnippetForm from './components/SnippetForm';
 import SnippetList from './components/SnippetList';
 import SnippetCalendar from './components/SnippetCalendar';
+import FamiliaList from "./components/FamiliaList";
+
+import FamiliaForm from './components/FamiliaForm'; // Importa el componente FamiliaForm, by seba
+
 
 function App() {
   return (
@@ -14,10 +18,15 @@ function App() {
         <SnippetList />
 
       </div>
-
+      {/*
       <div className="col-span-10 bg-gray-900 text-white h-screen items-center justify-center text-center">
         <SnippetCalendar />
         
+      </div>
+      */}
+      <div className="col-span-10 bg-gray-900 text-white h-screen overflow-y-auto">
+        <FamiliaForm />
+        <FamiliaList />
       </div> 
 
     </div>
