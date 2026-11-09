@@ -4,8 +4,8 @@ import {
   writeTextFile,
   createDir,
   exists,
-  BaseDirectory,
 } from "@tauri-apps/api/fs";
+import { desktopDir, join } from "@tauri-apps/api/path";
 
 export interface Familia {
   id: string;
@@ -17,22 +17,31 @@ export interface Familia {
   archivada?: boolean;
 }
 
-const CARPETA = "familias";
-const ARCHIVO = "familias/familias.json";
+const CARPETA = "informaciónFamilias";
+
+async function obtenerArchivoFamilias(): Promise<string> {
+  return join(await desktopDir(), CARPETA, "familias.json");
+}
+
+async function escribirFamilias(familias: Familia[]): Promise<void> {
+  const directorio = await join(await desktopDir(), CARPETA);
+  await createDir(directorio, { recursive: true });
+  await writeTextFile(
+    await join(directorio, "familias.json"),
+    JSON.stringify(familias, null, 2)
+  );
+}
 
 
 export async function leerFamilias(): Promise<Familia[]> {
-  const existe = await exists(ARCHIVO, {
-    dir: BaseDirectory.AppData,
-  });
+  const archivo = await obtenerArchivoFamilias();
+  const existe = await exists(archivo);
 
   if (!existe) {
     return [];
   }
 
-  const contenido = await readTextFile(ARCHIVO, {
-    dir: BaseDirectory.AppData,
-  });
+  const contenido = await readTextFile(archivo);
 
   const familias = JSON.parse(contenido);
 
@@ -47,11 +56,6 @@ export async function leerFamilias(): Promise<Familia[]> {
 export async function guardarFamilia(
   familia: Familia
 ): Promise<void> {
-  await createDir(CARPETA, {
-    dir: BaseDirectory.AppData,
-    recursive: true,
-  });
-
   const familias = await leerFamilias();
 
   const duplicada = familias.some(
@@ -66,11 +70,7 @@ export async function guardarFamilia(
 
   familias.push(familia);
 
-  await writeTextFile(
-    ARCHIVO,
-    JSON.stringify(familias, null, 2),
-    { dir: BaseDirectory.AppData }
-  );
+  await escribirFamilias(familias);
 }
 
 
@@ -100,11 +100,7 @@ export async function editarFamilia(
 
   familias[indice] = familiaActualizada;
 
-  await writeTextFile(
-    ARCHIVO,
-    JSON.stringify(familias, null, 2),
-    { dir: BaseDirectory.AppData }
-  );
+  await escribirFamilias(familias);
 }
 
 
@@ -122,10 +118,5 @@ export async function cambiarEstadoFamilia(
 
   familia.archivada = archivar;
 
-  await writeTextFile(
-    ARCHIVO,
-    JSON.stringify(familias, null, 2),
-    { dir: BaseDirectory.AppData }
-  );
+  await escribirFamilias(familias);
 }
-
