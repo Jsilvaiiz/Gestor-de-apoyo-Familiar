@@ -60,7 +60,7 @@ function SnippetItem({snippetName}: Props) {
           <Trash2 className="h-4 w-4" />
         </button>
 
-        <button
+        {/* <button
           type="button"
           aria-label="Cerrar snippet"
           title="Cerrar"
@@ -72,7 +72,7 @@ function SnippetItem({snippetName}: Props) {
           }}
         >
           <X className="h-4 w-4" />
-        </button>
+        </button> */}
       </div>
     </div>
   );

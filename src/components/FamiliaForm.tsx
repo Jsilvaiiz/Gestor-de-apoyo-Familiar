@@ -45,7 +45,7 @@ export default function FamiliaForm() {
 
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-6 bg-zinc-900 text-white">
       <h2 className="text-2xl font-bold mb-6">
         Registrar familia
       </h2>
