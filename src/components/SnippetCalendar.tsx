@@ -45,37 +45,17 @@ function SnippetCalendar({
 
   return (
     <section className="h-full min-h-0 w-full text-left text-white">
-      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden border border-zinc-700/80 bg-zinc-900">
-        <header className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-b border-zinc-700/80 p-3 sm:p-4">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Mes anterior"
-              className="rounded-none! bg-transparent! shadow-none! px-2.5 py-1.5 text-lg text-gray-300 transition hover:bg-zinc-800 hover:text-white"
-              onClick={() =>
-                onVisibleMonthChange(
-                  new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1)
-                )
-              }
-            >
-              ‹
-            </button>
-            <h2 className="min-w-32 text-center text-lg capitalize">{monthLabel}</h2>
-            <button
-              type="button"
-              aria-label="Mes siguiente"
-              className="rounded-none! bg-transparent! shadow-none! px-2.5 py-1.5 text-lg text-gray-300 transition hover:bg-zinc-800 hover:text-white"
-              onClick={() =>
-                onVisibleMonthChange(
-                  new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1)
-                )
-              }
-            >
-              ›
-            </button>
-          </div>
-        </header>
+      <div className="group relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-zinc-900">
+        
+        
 
+          <div className="text-center text-sm font-medium text-zinc-400 py-1">
+            {visibleMonth.toLocaleDateString("es-CL", {
+              month: "long",
+            }).replace(/^./, (letra) => letra.toUpperCase())}
+            {" "}
+            {visibleMonth.getFullYear()}
+          </div>
         <div className="grid shrink-0 grid-cols-7 border-b border-zinc-700/80 bg-zinc-800/40">
           {WEEKDAYS.map((day) => (
             <div key={day} className="py-2.5 text-center text-sm font-semibold text-gray-400">
@@ -112,6 +92,62 @@ function SnippetCalendar({
             )
           })}
         </div>
+
+
+
+          {/* Zona izquierda: mes anterior */}
+          <div className="group/izquierda absolute left-0 top-0 bottom-0 z-20 flex w-14 items-center justify-start">
+
+            <button
+              type="button"
+              aria-label="Mes anterior"
+              title="Mes anterior"
+              onClick={() =>
+                onVisibleMonthChange(
+                  new Date(
+                    visibleMonth.getFullYear(),
+                    visibleMonth.getMonth() - 1,
+                    1
+                  )
+                )
+              }
+              className="ml-2 rounded-full! bg-zinc-950/80! p-3!
+                        text-white shadow-lg!
+                        opacity-0 group-hover/izquierda:opacity-100
+                        focus-visible:opacity-100 transition-opacity"
+            >
+              ‹
+            </button>
+
+          </div>
+
+          {/* Zona derecha: mes siguiente */}
+          <div className="group/derecha absolute right-0 top-0 bottom-0 z-20 flex w-14 items-center justify-end">
+
+            <button
+              type="button"
+              aria-label="Mes siguiente"
+              title="Mes siguiente"
+              onClick={() =>
+                onVisibleMonthChange(
+                  new Date(
+                    visibleMonth.getFullYear(),
+                    visibleMonth.getMonth() + 1,
+                    1
+                  )
+                )
+              }
+              className="mr-2 rounded-full! bg-zinc-950/80! p-3!
+                        text-white shadow-lg!
+                        opacity-0 group-hover/derecha:opacity-100
+                        focus-visible:opacity-100 transition-opacity"
+            >
+              ›
+            </button>
+
+          </div>
+
+
       </div>
     </section>
   )
