@@ -7,6 +7,12 @@ import {
 } from "@tauri-apps/api/fs";
 import { desktopDir, join } from "@tauri-apps/api/path";
 
+export interface Observacion {
+  id: string;
+  texto: string;
+  fechaCreacion: string;
+}
+
 export interface Familia {
   id: string;
   nombre: string;
@@ -15,6 +21,8 @@ export interface Familia {
   direccion: string;
   fechaInicio?: string;
   archivada?: boolean;
+  etiquetas?: string[];
+  observaciones?: Observacion[];
 }
 
 const CARPETA = "informaciónFamilias";
