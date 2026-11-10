@@ -26,6 +26,7 @@ export interface Familia {
   direccion: string;
   fechaInicio?: string;
   sesionesReprogramadas?: SesionReprogramada[];
+  sesionesRealizadas?: string[];
   archivada?: boolean;
   etiquetas?: string[];
   observaciones?: Observacion[];
@@ -222,5 +223,37 @@ export async function editarObservacionFamilia(
   familias[indiceFamilia] = familiaActualizada;
   await escribirFamilias(familias);
 
+  return familiaActualizada;
+}
+
+export async function actualizarEstadoSesionFamilia(
+  familiaId: string,
+  fechaOriginal: string,
+  realizada: boolean
+): Promise<Familia> {
+  if (!esFechaValida(fechaOriginal)) {
+    throw new Error("La fecha original de la sesión no es válida");
+  }
+
+  const familias = await leerFamilias();
+  const indiceFamilia = familias.findIndex((familia) => familia.id === familiaId);
+  if (indiceFamilia === -1) {
+    throw new Error("No se encontró la familia");
+  }
+
+  const familia = familias[indiceFamilia];
+  const sesionesRealizadas = new Set(familia.sesionesRealizadas ?? []);
+  if (realizada) {
+    sesionesRealizadas.add(fechaOriginal);
+  } else {
+    sesionesRealizadas.delete(fechaOriginal);
+  }
+
+  const familiaActualizada = {
+    ...familia,
+    sesionesRealizadas: [...sesionesRealizadas],
+  };
+  familias[indiceFamilia] = familiaActualizada;
+  await escribirFamilias(familias);
   return familiaActualizada;
 }

@@ -39,6 +39,10 @@ function toDateKey(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+function getSesionKey(sesion: SesionProgramada) {
+  return `${sesion.familia.id}:${toDateKey(sesion.fechaOriginal)}`
+}
+
 function SnippetCalendar({
   selectedDate,
   onSelectDate,
@@ -49,7 +53,9 @@ function SnippetCalendar({
   const [familias, setFamilias] = useState<Familia[]>([])
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([])
   const [errorFamilias, setErrorFamilias] = useState('')
-  const [sesionAbierta, setSesionAbierta] = useState<SesionProgramada | null>(null)
+  const [sesionAbiertaKey, setSesionAbiertaKey] = useState<string | null>(null)
+  const [familiasSeleccionadas, setFamiliasSeleccionadas] = useState<string[] | null>(null)
+  const [filtroFamiliasAbierto, setFiltroFamiliasAbierto] = useState(false)
   const {
     fechaDestinoArrastre,
     tarjetaArrastrada,
@@ -65,7 +71,7 @@ function SnippetCalendar({
       ),
     onError: setErrorFamilias,
     onMoveComplete: () => {
-      setSesionAbierta(null)
+      setSesionAbiertaKey(null)
       setErrorFamilias('')
     },
   })
@@ -113,12 +119,45 @@ function SnippetCalendar({
     })
   }, [visibleMonth])
 
-  const sesionesPorSemana = useMemo(
-    () => calcularSesionesRutaRegular(familias),
+  const familiasActivas = useMemo(
+    () => familias.filter((familia) => familia.archivada !== true),
     [familias]
   )
 
+  const familiasVisibles = useMemo(
+    () =>
+      familiasSeleccionadas === null
+        ? familiasActivas
+        : familiasActivas.filter((familia) =>
+            familiasSeleccionadas.includes(familia.id)
+          ),
+    [familiasActivas, familiasSeleccionadas]
+  )
+
+  const sesionesPorSemana = useMemo(
+    () => calcularSesionesRutaRegular(familiasVisibles),
+    [familiasVisibles]
+  )
+
   const selectedDateKey = toDateKey(selectedDate)
+  const todasLasFamiliasSeleccionadas =
+    familiasSeleccionadas === null ||
+    familiasActivas.every((familia) =>
+      familiasSeleccionadas.includes(familia.id)
+    )
+
+  function cambiarFiltroFamilia(familiaId: string) {
+    const seleccionActual =
+      familiasSeleccionadas ?? familiasActivas.map((familia) => familia.id)
+    const nuevaSeleccion = seleccionActual.includes(familiaId)
+      ? seleccionActual.filter((id) => id !== familiaId)
+      : [...seleccionActual, familiaId]
+
+    setFamiliasSeleccionadas(
+      nuevaSeleccion.length === familiasActivas.length ? null : nuevaSeleccion
+    )
+    setSesionAbiertaKey(null)
+  }
 
   return (
     <section className="h-full min-h-0 w-full text-left text-white">
@@ -142,8 +181,73 @@ function SnippetCalendar({
         
         
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center py-1 text-sm font-medium text-zinc-400">
-            <span />
+          <div className="relative z-40 grid grid-cols-[1fr_auto_1fr] items-center py-1 text-sm font-medium text-zinc-400">
+            <div className="relative justify-self-start pl-2">
+              <button
+                type="button"
+                aria-expanded={filtroFamiliasAbierto}
+                aria-haspopup="true"
+                onClick={() => setFiltroFamiliasAbierto((abierto) => !abierto)}
+                className="!rounded-none !border-none !bg-zinc-800 !px-2 !py-1 !text-[10px] !font-medium !text-zinc-200 !shadow-none hover:!bg-zinc-700"
+              >
+                Familias: {todasLasFamiliasSeleccionadas
+                  ? 'Todas'
+                  : familiasSeleccionadas?.length === 0
+                    ? 'Ninguna'
+                    : `${familiasSeleccionadas?.length} seleccionada(s)`}
+              </button>
+              {filtroFamiliasAbierto && (
+                <div
+                  role="group"
+                  aria-label="Filtrar familias del calendario"
+                  className="absolute left-2 top-full z-[60] mt-1 max-h-56 w-52 overflow-y-auto rounded border border-zinc-600 bg-zinc-900 p-2 text-xs text-zinc-100 shadow-xl"
+                >
+                  <label className="flex cursor-pointer items-center gap-2 border-b border-zinc-700 pb-2 font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={todasLasFamiliasSeleccionadas}
+                      className="!m-0 !h-3 !w-3 !shrink-0 !p-0 !accent-sky-500"
+                      onChange={() => {
+                        setFamiliasSeleccionadas(
+                          todasLasFamiliasSeleccionadas
+                            ? []
+                            : null
+                        )
+                        setSesionAbiertaKey(null)
+                      }}
+                    />
+                    Todas las familias
+                  </label>
+                  {familiasActivas.map((familia) => (
+                    <label
+                      key={familia.id}
+                      className="flex cursor-pointer items-center gap-2 py-1"
+                    >
+                      <input
+                        type="checkbox"
+                        className="!m-0 !h-3 !w-3 !shrink-0 !p-0 !accent-sky-500"
+                        checked={
+                          familiasSeleccionadas === null ||
+                          familiasSeleccionadas.includes(familia.id)
+                        }
+                        onChange={() => cambiarFiltroFamilia(familia.id)}
+                      />
+                      <span className="truncate">{familia.nombre}</span>
+                    </label>
+                  ))}
+                  {familiasActivas.length === 0 && (
+                    <p className="py-2 text-zinc-400">No hay familias para mostrar.</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setFiltroFamiliasAbierto(false)}
+                    className="mt-1 w-full !rounded !border-zinc-700 !bg-zinc-800 !px-2 !py-1 !text-xs !text-zinc-200 !shadow-none hover:!bg-zinc-700"
+                  >
+                    Listo
+                  </button>
+                </div>
+              )}
+            </div>
             <span className="text-center">
               {visibleMonth.toLocaleDateString("es-CL", {
                 month: "long",
@@ -152,14 +256,6 @@ function SnippetCalendar({
               {visibleMonth.getFullYear()}
             </span>
             <span className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 pr-2 text-[10px]">
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-teal-900" aria-hidden="true" />
-                Sesión
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm bg-zinc-700" aria-hidden="true" />
-                Fin de semana
-              </span>
               {([1, 2, 3, 4] as const).map((etapa) => (
                 <span key={etapa} className="flex items-center gap-1">
                   <span className={`h-2.5 w-2.5 rounded-sm ${ETAPA_ESTILOS[etapa].split(' ')[0]}`} aria-hidden="true" />
@@ -181,7 +277,7 @@ function SnippetCalendar({
             const weekDays = calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7)
             const weekKey = toDateKey(weekDays[0])
             const sesionesSemana = sesionesPorSemana.get(weekKey) ?? []
-            const etapasSemana = calcularEtapasRutaRegular(familias, weekDays[0])
+            const etapasSemana = calcularEtapasRutaRegular(familiasVisibles, weekDays[0])
             const detalleSesiones = sesionesSemana
               .map(({ familia, etapa, numeroMes }) =>
                 `${familia.nombre} (${NOMBRE_ETAPA[etapa]}, mes ${numeroMes})`
@@ -208,10 +304,10 @@ function SnippetCalendar({
                   )
                   const fondoDia = isWeekend
                     ? '!bg-zinc-700'
-                    : sesionesSemana.length > 0
-                      ? '!bg-teal-950/70'
-                      : isToday
-                        ? '!bg-[#0C3956]'
+                    : isToday
+                      ? '!bg-[#0C3956]'
+                      : sesionesSemana.length > 0
+                        ? '!bg-teal-950/70'
                         : '!bg-zinc-800'
                   const ariaLabel = `${date.toLocaleDateString('es-ES')}${
                     detalleSesiones ? `. Sesiones esta semana: ${detalleSesiones}` : ''
@@ -226,7 +322,7 @@ function SnippetCalendar({
                       data-calendar-date={dateKey}
                       className={`relative min-h-0 min-w-0 ${
                         [
-                          ...(sesionesDelDia.some((sesion) => sesion === sesionAbierta)
+                          ...(sesionesDelDia.some((sesion) => getSesionKey(sesion) === sesionAbiertaKey)
                             ? ['z-30']
                             : []),
                           ...(fechaDestinoArrastre === dateKey
@@ -255,11 +351,11 @@ function SnippetCalendar({
                       </button>
                       {sesionesDelDia.length > 0 && (
                         <div
-                          className="pointer-events-none absolute z-10 flex flex-col items-start overflow-visible"
+                          className="pointer-events-none absolute z-10 flex flex-col items-center justify-center overflow-visible"
                           style={{
                             top: 28,
-                            left: 4,
-                            right: 2,
+                            left: 0,
+                            right: 0,
                             bottom: 2,
                             gap: sesionesDelDia.length > 1 ? 2 : 4,
                           }}
@@ -270,7 +366,7 @@ function SnippetCalendar({
                               sesion={sesion}
                               etiquetas={etiquetas}
                               cantidadEnElDia={sesionesDelDia.length}
-                              abierta={sesionAbierta === sesion}
+                              abierta={sesionAbiertaKey === getSesionKey(sesion)}
                               onStartDrag={iniciarArrastre}
                               onClick={(sesionClicada, event) => {
                                 event.stopPropagation()
@@ -278,8 +374,9 @@ function SnippetCalendar({
                                   event.preventDefault()
                                   return
                                 }
-                                setSesionAbierta(
-                                  sesionAbierta === sesionClicada ? null : sesionClicada
+                                const sesionKey = getSesionKey(sesionClicada)
+                                setSesionAbiertaKey((abierta) =>
+                                  abierta === sesionKey ? null : sesionKey
                                 )
                               }}
                               onFamiliaActualizada={(familiaActualizada) =>
@@ -291,7 +388,7 @@ function SnippetCalendar({
                                   )
                                 )
                               }
-                              onCerrar={() => setSesionAbierta(null)}
+                              onCerrar={() => setSesionAbiertaKey(null)}
                             />
                           ))}
                         </div>

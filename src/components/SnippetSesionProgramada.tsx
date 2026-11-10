@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import { Check } from 'lucide-react'
 import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { Etiqueta } from '../utils/etiquetas'
-import { editarObservacionFamilia, type Familia } from '../utils/familias'
+import {
+  actualizarEstadoSesionFamilia,
+  editarObservacionFamilia,
+  type Familia,
+} from '../utils/familias'
 import type { EtapaRutaRegular, SesionProgramada } from '../utils/rutaRegular'
 
 const ETAPA_COLOR: Record<
@@ -22,6 +27,13 @@ const NOMBRE_ETAPA: Record<EtapaRutaRegular, string> = {
   2: 'Etapa II',
   3: 'Etapa III',
   4: 'Etapa IV',
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 interface SnippetSesionProgramadaProps {
@@ -59,7 +71,7 @@ export default function SnippetSesionProgramada({
   return (
     <div
       className="relative min-h-0"
-      style={{ flex: '1 1 0%', width, maxWidth: '100%' }}
+      style={{ flex: '0 1 auto', width, maxWidth: '100%' }}
     >
       <button
         type="button"
@@ -75,11 +87,15 @@ export default function SnippetSesionProgramada({
           backgroundColor: estilo.postIt,
           color: '#27272a',
           fontSize,
-          lineHeight: 1.1,
+          fontFamily: '"Segoe Print", "Comic Sans MS", cursive',
+          fontWeight: 600,
+          lineHeight: 2,
           padding: '4px',
+          minHeight: 20,
           whiteSpace: 'normal',
           overflowWrap: 'anywhere',
-          boxShadow: '0 3px 6px rgba(0, 0, 0, 0.25)',
+          boxShadow:
+            '2px 4px 8px rgba(0, 0, 0, 0.48), 0 1px 2px rgba(0, 0, 0, 0.35)',
         }}
         className={`pointer-events-auto block h-full w-full min-h-0 select-none overflow-hidden text-center font-bold !rounded-none border border-black/10 capitalize transition hover:brightness-105 !outline-none focus:!outline-none focus:!ring-0 ${
           arrastrable
@@ -161,6 +177,29 @@ function SesionPopover({
     }
   }
 
+  async function cambiarEstadoSesion() {
+    setErrorObservacion('')
+    try {
+      const familiaActualizada = await actualizarEstadoSesionFamilia(
+        sesion.familia.id,
+        toDateKey(sesion.fechaOriginal),
+        !sesion.realizada
+      )
+      onFamiliaActualizada(familiaActualizada)
+      window.dispatchEvent(new Event('familias-actualizadas'))
+    } catch (error) {
+      setErrorObservacion(`No se pudo actualizar la sesión: ${String(error)}`)
+    }
+  }
+
+  const inicioDeSemana = (fecha: Date) => {
+    const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+    inicio.setDate(inicio.getDate() - ((inicio.getDay() + 6) % 7))
+    return inicio
+  }
+  const puedeMarcarRealizada =
+    inicioDeSemana(new Date()) >= inicioDeSemana(sesion.fecha)
+
   useEffect(() => {
     function cerrarAlHacerClicFuera(event: MouseEvent) {
       if (
@@ -195,29 +234,49 @@ function SesionPopover({
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >
-      <div className="mb-1 flex items-start justify-between gap-1">
+      <div className="mb-1 flex items-center gap-1">
         <h3 className="min-w-0 flex-1 truncate text-xs font-bold">
           {sesion.familia.nombre}
         </h3>
-        <button
-          type="button"
-          aria-label="Cerrar resumen de sesión"
-          onClick={onCerrar}
-          className="!border-0 !bg-transparent !p-0 text-sm leading-none text-zinc-700 !shadow-none hover:text-black"
-        >
-          ×
-        </button>
+        {puedeMarcarRealizada && (
+          <button
+            type="button"
+            aria-label={
+              sesion.realizada
+                ? 'Marcar sesión como pendiente'
+                : 'Marcar sesión como realizada'
+            }
+            aria-pressed={sesion.realizada}
+            title={
+              sesion.realizada
+                ? 'Marcar como pendiente'
+                : 'Marcar como realizada'
+            }
+            onClick={() => void cambiarEstadoSesion()}
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full !border-2 !p-0 !shadow-none ${
+              sesion.realizada
+                ? '!border-green-600 !bg-green-600 !text-white'
+                : '!border-zinc-400 !bg-transparent !text-transparent hover:!border-zinc-600'
+            }`}
+          >
+            {sesion.realizada && <Check size={12} aria-hidden="true" />}
+          </button>
+        )}
       </div>
-      <p className="text-[10px] font-medium">
-        {sesion.fecha.toLocaleDateString('es-CL', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-      </p>
-      <p className="mb-1 text-[9px] opacity-70">
-        Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
-      </p>
+      <div className="mb-1 flex items-center justify-between gap-1">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium">
+            {sesion.fecha.toLocaleDateString('es-CL', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </p>
+          <p className="text-[9px] opacity-70">
+            Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
+          </p>
+        </div>
+      </div>
 
       <div className="mb-1">
         {etiquetasFamilia.length > 0 && (

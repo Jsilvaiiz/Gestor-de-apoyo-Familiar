@@ -7,6 +7,7 @@ export interface SesionProgramada {
   numeroMes: number
   fecha: Date
   fechaOriginal: Date
+  realizada: boolean
 }
 
 export type EtapaRutaRegular = 1 | 2 | 3 | 4
@@ -144,6 +145,7 @@ export function calcularSesionesRutaRegular(
       numeroMes,
       fecha: new Date(fecha),
       fechaOriginal: new Date(fechaOriginal),
+      realizada: familia.sesionesRealizadas?.includes(fechaOriginalKey) ?? false,
     })
     sesiones.set(semanaKey, sesionesSemana)
   }
