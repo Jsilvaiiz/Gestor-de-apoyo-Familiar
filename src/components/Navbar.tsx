@@ -93,6 +93,12 @@ export function Navbar({
 
   const fechaActual = formatoFecha(new Date());
   const fechaElegida = formatoFecha(fechaSeleccionada);
+  const nombreVista: Record<Vista, string> = {
+    calendario: "Calendario",
+    FamiliaList: "Familias",
+    FamiliaForm: "Registrar familias",
+    AdministradorEtiquetas: "Administrar etiquetas",
+  };
 
   const estiloBoton = (activo: boolean) =>
     `flex items-center gap-2 rounded-lg px-3 py-2 text-sm
@@ -106,7 +112,6 @@ export function Navbar({
   return (
     <nav className="grid w-full shrink-0 grid-cols-3 items-center gap-3 border-b border-zinc-800 bg-neutral-900 px-5 py-3 text-white">
 
-      {/* Fecha actual */}
       <div className="min-w-0 text-left">
         <button
           type="button"
@@ -115,19 +120,18 @@ export function Navbar({
             onVolverAHoy();
           }}
           title="Volver al calendario de hoy"
-          className="!bg-transparent !border-0 !shadow-none text-left hover:text-blue-300"
+          className="!bg-transparent !border-0 !shadow-none text-left"
         >
-          <span className="block text-xs text-zinc-400">
-            Fecha actual
+          <span className="block truncate text-sm font-semibold text-white">
+            {nombreVista[vistaActual]}
           </span>
 
-          <span className="block text-sm font-semibold capitalize">
+          <span className="block truncate text-xs capitalize text-zinc-400">
             {fechaActual}
           </span>
         </button>
       </div>
 
-      {/* Fecha seleccionada */}
       <div className="min-w-0 text-center">
         <span className="block text-xs text-zinc-400">
           Fecha seleccionada
@@ -138,10 +142,8 @@ export function Navbar({
         </span>
       </div>
 
-      {/* Navegación */}
       <div className="flex items-center justify-end gap-2">
 
-        {/* Calendario */}
         <button
           type="button"
           onClick={() => cambiarVista("calendario")}
@@ -150,26 +152,6 @@ export function Navbar({
           className={estiloBoton(vistaActual === "calendario")}
         >
           <CalendarDays size={18} aria-hidden="true" />
-        </button>
-
-        {/* Familias */}
-        <button
-          type="button"
-          onClick={() => cambiarVista("FamiliaList")}
-          className={estiloBoton(vistaActual === "FamiliaList")}
-        >
-          <Users size={16} aria-hidden="true" />
-          <span>Familias</span>
-        </button>
-
-        {/* Registrar familia */}
-        <button
-          type="button"
-          onClick={() => cambiarVista("FamiliaForm")}
-          className={estiloBoton(vistaActual === "FamiliaForm")}
-        >
-          <UserPlus size={16} aria-hidden="true" />
-          <span>Registrar familia</span>
         </button>
 
         {/* Menú de herramientas */}
@@ -184,7 +166,9 @@ export function Navbar({
             onClick={() => setMenuAbierto(!menuAbierto)}
             className={estiloBoton(
               menuAbierto ||
-                vistaActual === "AdministradorEtiquetas"
+                vistaActual === "AdministradorEtiquetas" ||
+                vistaActual === "FamiliaList" ||
+                vistaActual === "FamiliaForm"
             )}
           >
             <Ellipsis size={20} aria-hidden="true" />
@@ -210,6 +194,28 @@ export function Navbar({
               >
                 <Tags size={17} aria-hidden="true" />
                 <span>Administrar etiquetas</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() =>
+                  cambiarVista("FamiliaList")
+                }
+                className="flex w-full items-center gap-2 rounded-lg !border-0 !bg-transparent px-3 py-2 text-left text-sm text-zinc-200 !shadow-none hover:!bg-zinc-800 hover:text-white"
+              >
+                <Tags size={17} aria-hidden="true" />
+                <span>Administrar Familias</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() =>
+                  cambiarVista("FamiliaForm")
+                }
+                className="flex w-full items-center gap-2 rounded-lg !border-0 !bg-transparent px-3 py-2 text-left text-sm text-zinc-200 !shadow-none hover:!bg-zinc-800 hover:text-white"
+              >
+                <Tags size={17} aria-hidden="true" />
+                <span>Registrar Familias</span>
               </button>
 
             </div>
