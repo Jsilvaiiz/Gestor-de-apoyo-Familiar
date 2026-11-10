@@ -1,20 +1,36 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import SnippetCalendar from "./components/SnippetCalendar";
 import FamiliaList from "./components/FamiliaList";
 import FamiliaForm from "./components/FamiliaForm";
+import AdministradorEtiquetas from "./components/AdministradorEtiquetas";
 import Navbar from "./components/Navbar";
 
-type Vista = "calendario" | "FamiliaList" | "FamiliaForm";
+import { migrarEtiquetasAntiguas } from "./utils/migrarEtiquetas";
+
+// Vistas disponibles en la aplicación
+type Vista =
+  | "calendario"
+  | "FamiliaList"
+  | "FamiliaForm"
+  | "AdministradorEtiquetas";
 
 function App() {
   const [vista, setVista] = useState<Vista>("calendario");
+  const [errorMigracion, setErrorMigracion] = useState("");
+
+  useEffect(() => {
+    void migrarEtiquetasAntiguas().catch((error) => {
+      setErrorMigracion(
+        "No se pudieron actualizar las etiquetas antiguas: " +
+          String(error)
+      );
+    });
+  }, []);
 
   // Fecha seleccionada por la usuaria
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(
-    () => new Date()
-  );
+  const [fechaSeleccionada, setFechaSeleccionada] =
+    useState(() => new Date());
 
   // Mes que actualmente muestra el calendario
   const [mesVisible, setMesVisible] = useState(() => {
@@ -51,6 +67,14 @@ function App() {
         onVolverAHoy={volverAHoy}
       />
 
+      {errorMigracion && (
+        <p
+          role="alert"
+          className="bg-red-900/40 px-5 py-2 text-sm text-red-300"
+        >
+          {errorMigracion}
+        </p>
+      )}
       {/* Contenido principal */}
       <main className="min-h-0 flex-1 overflow-y-auto bg-zinc-800 text-white">
 
@@ -63,9 +87,11 @@ function App() {
           />
         ) : vista === "FamiliaList" ? (
           <FamiliaList />
-        ) : (
+        ) : vista === "FamiliaForm" ? (
           <FamiliaForm />
-        )}
+        ) : vista === "AdministradorEtiquetas" ? (
+          <AdministradorEtiquetas />
+        ) : null}
 
       </main>
     </div>
