@@ -206,6 +206,13 @@ function SnippetCalendar({
                   const sesionesDelDia = sesionesSemana.filter(
                     (sesion) => toDateKey(sesion.fecha) === dateKey
                   )
+                  const fondoDia = isWeekend
+                    ? '!bg-zinc-700'
+                    : sesionesSemana.length > 0
+                      ? '!bg-teal-950/70'
+                      : isToday
+                        ? '!bg-[#0C3956]'
+                        : '!bg-zinc-800'
                   const ariaLabel = `${date.toLocaleDateString('es-ES')}${
                     detalleSesiones ? `. Sesiones esta semana: ${detalleSesiones}` : ''
                   }${detalleEtapas ? `. Etapas esta semana: ${detalleEtapas}` : ''}`
@@ -234,15 +241,7 @@ function SnippetCalendar({
                         aria-pressed={selectedDateKey === dateKey}
                         title={title || undefined}
                         onClick={() => onSelectDate(date)}
-                        className={`absolute inset-0 flex w-full flex-col items-start justify-start outline-none border-none rounded-none! shadow-none! ${
-                          isToday
-                            ? '!bg-[#0C3956]'
-                            : isWeekend
-                              ? '!bg-zinc-700'
-                              : sesionesDelDia.length > 0
-                                ? '!bg-teal-950/70'
-                                : '!bg-zinc-800'
-                        } p-1 text-left transition hover:bg-zinc-800 ${
+                        className={`absolute inset-0 flex w-full flex-col items-start justify-start outline-none border-none rounded-none! shadow-none! ${fondoDia} p-1 text-left transition hover:bg-zinc-800 ${
                           isCurrentMonth ? 'text-white' : 'text-zinc-400 opacity-40'
                         } ${selectedDateKey === dateKey ? 'bg-blue-950/60 ring-2 ring-inset ring-blue-500' : ''}`}
                       >
@@ -283,6 +282,15 @@ function SnippetCalendar({
                                   sesionAbierta === sesionClicada ? null : sesionClicada
                                 )
                               }}
+                              onFamiliaActualizada={(familiaActualizada) =>
+                                setFamilias((actuales) =>
+                                  actuales.map((familia) =>
+                                    familia.id === familiaActualizada.id
+                                      ? familiaActualizada
+                                      : familia
+                                  )
+                                )
+                              }
                               onCerrar={() => setSesionAbierta(null)}
                             />
                           ))}

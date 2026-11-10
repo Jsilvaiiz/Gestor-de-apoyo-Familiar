@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { Etiqueta } from '../utils/etiquetas'
+import { editarObservacionFamilia, type Familia } from '../utils/familias'
 import type { EtapaRutaRegular, SesionProgramada } from '../utils/rutaRegular'
 
 const ETAPA_COLOR: Record<
@@ -36,6 +37,7 @@ interface SnippetSesionProgramadaProps {
     sesion: SesionProgramada,
     event: ReactMouseEvent<HTMLButtonElement>
   ) => void
+  onFamiliaActualizada: (familia: Familia) => void
   onCerrar: () => void
 }
 
@@ -46,6 +48,7 @@ export default function SnippetSesionProgramada({
   abierta,
   onStartDrag,
   onClick,
+  onFamiliaActualizada,
   onCerrar,
 }: SnippetSesionProgramadaProps) {
   const estilo = ETAPA_COLOR[sesion.etapa]
@@ -91,6 +94,7 @@ export default function SnippetSesionProgramada({
         <SesionPopover
           sesion={sesion}
           etiquetas={etiquetas}
+          onFamiliaActualizada={onFamiliaActualizada}
           onCerrar={onCerrar}
         />
       )}
@@ -101,11 +105,22 @@ export default function SnippetSesionProgramada({
 interface SesionPopoverProps {
   sesion: SesionProgramada
   etiquetas: Etiqueta[]
+  onFamiliaActualizada: (familia: Familia) => void
   onCerrar: () => void
 }
 
-function SesionPopover({ sesion, etiquetas, onCerrar }: SesionPopoverProps) {
+function SesionPopover({
+  sesion,
+  etiquetas,
+  onFamiliaActualizada,
+  onCerrar,
+}: SesionPopoverProps) {
   const tarjetaRef = useRef<HTMLDivElement>(null)
+  const [observacionEditando, setObservacionEditando] = useState<string | null>(null)
+  const [textoEditado, setTextoEditado] = useState('')
+  const [guardandoObservacion, setGuardandoObservacion] = useState(false)
+  const [errorObservacion, setErrorObservacion] = useState('')
+  const [mensajeObservacion, setMensajeObservacion] = useState('')
   const observaciones = [...(sesion.familia.observaciones ?? [])]
     .sort(
       (a, b) =>
@@ -122,6 +137,29 @@ function SesionPopover({ sesion, etiquetas, onCerrar }: SesionPopoverProps) {
 
     return etiqueta ?? { id: valor, nombre: valor, color: '#52525b', activa: true }
   })
+
+  async function guardarObservacion(observacionId: string) {
+    if (guardandoObservacion) return
+
+    setGuardandoObservacion(true)
+    setErrorObservacion('')
+    setMensajeObservacion('')
+    try {
+      const familiaActualizada = await editarObservacionFamilia(
+        sesion.familia.id,
+        observacionId,
+        textoEditado
+      )
+      onFamiliaActualizada(familiaActualizada)
+      window.dispatchEvent(new Event('familias-actualizadas'))
+      setObservacionEditando(null)
+      setMensajeObservacion('Comentario actualizado.')
+    } catch (error) {
+      setErrorObservacion(`No se pudo actualizar el comentario: ${String(error)}`)
+    } finally {
+      setGuardandoObservacion(false)
+    }
+  }
 
   useEffect(() => {
     function cerrarAlHacerClicFuera(event: MouseEvent) {
@@ -151,7 +189,11 @@ function SesionPopover({ sesion, etiquetas, onCerrar }: SesionPopoverProps) {
       ref={tarjetaRef}
       role="dialog"
       aria-label={`Sesión de ${sesion.familia.nombre}`}
-      className={`absolute bottom-full left-0 z-50 mb-1 w-48 max-w-[75vw] max-h-44 overflow-y-auto rounded-sm p-2 text-zinc-900 shadow-lg ${ETAPA_COLOR[sesion.etapa].nota}`}
+      className={`pointer-events-auto absolute bottom-full left-0 z-50 mb-1 w-48 max-w-[75vw] max-h-44 overflow-y-auto rounded-sm p-2 text-zinc-900 shadow-lg ${ETAPA_COLOR[sesion.etapa].nota}`}
+      style={{ pointerEvents: 'auto' }}
+      onMouseDown={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
     >
       <div className="mb-1 flex items-start justify-between gap-1">
         <h3 className="min-w-0 flex-1 truncate text-xs font-bold">
@@ -174,7 +216,7 @@ function SesionPopover({ sesion, etiquetas, onCerrar }: SesionPopoverProps) {
         })}
       </p>
       <p className="mb-1 text-[9px] opacity-70">
-        {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
+        Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
       </p>
 
       <div className="mb-1">
@@ -197,16 +239,75 @@ function SesionPopover({ sesion, etiquetas, onCerrar }: SesionPopoverProps) {
         {observaciones.length > 0 ? (
           <div className="space-y-1">
             {observaciones.map((observacion) => (
-              <p
-                key={observacion.id}
-                className="line-clamp-2 break-words text-[10px] leading-tight"
-              >
-                {observacion.texto}
-              </p>
+              <div key={observacion.id}>
+                {observacionEditando === observacion.id ? (
+                  <div className="space-y-1">
+                    <textarea
+                      autoFocus
+                      value={textoEditado}
+                      maxLength={2000}
+                      rows={3}
+                      disabled={guardandoObservacion}
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onChange={(event) => setTextoEditado(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault()
+                          void guardarObservacion(observacion.id)
+                        }
+                        if (event.key === 'Escape') {
+                          setObservacionEditando(null)
+                          setErrorObservacion('')
+                        }
+                      }}
+                      aria-label="Editar comentario"
+                      className="pointer-events-auto block w-full resize-y border-0 bg-transparent p-0 text-left text-[10px] font-normal leading-tight text-zinc-900 outline-none focus:ring-1 focus:ring-black/20"
+                    />
+                  </div>
+                ) : (
+                  <p
+                    role="button"
+                    tabIndex={0}
+                    title="Haz clic para editar; Enter guarda los cambios"
+                    style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1 }}
+                    onClick={() => {
+                      setObservacionEditando(observacion.id)
+                      setTextoEditado(observacion.texto)
+                      setErrorObservacion('')
+                      setMensajeObservacion('')
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setObservacionEditando(observacion.id)
+                        setTextoEditado(observacion.texto)
+                        setErrorObservacion('')
+                        setMensajeObservacion('')
+                      }
+                    }}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    className="pointer-events-auto relative z-10 block w-full cursor-text whitespace-pre-wrap break-words py-1 text-left text-[10px] font-normal leading-tight text-zinc-900 hover:bg-black/5"
+                  >
+                    {observacion.texto}
+                  </p>
+                )}
+              </div>
             ))}
           </div>
         ) : (
           <p className="text-[10px] italic opacity-60">Sin comentarios</p>
+        )}
+        {errorObservacion && (
+          <p role="alert" className="mt-1 text-[9px] text-red-800">
+            {errorObservacion}
+          </p>
+        )}
+        {mensajeObservacion && (
+          <p role="status" className="mt-1 text-[9px] text-green-800">
+            {mensajeObservacion}
+          </p>
         )}
       </div>
     </div>

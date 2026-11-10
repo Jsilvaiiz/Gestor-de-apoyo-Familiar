@@ -125,6 +125,7 @@ export function useCalendarSessionDrag({
             fechaDestino
           )
           callbacksRef.current.onFamiliaActualizada(familiaActualizada)
+          window.dispatchEvent(new Event('familias-actualizadas'))
           callbacksRef.current.onMoveComplete()
         } catch (error) {
           callbacksRef.current.onError(`No se pudo mover la sesión: ${String(error)}`)

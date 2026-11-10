@@ -65,6 +65,12 @@ function App() {
         fechaSeleccionada={fechaSeleccionada}
         onCambiarVista={setVista}
         onVolverAHoy={volverAHoy}
+        onIrASesion={(sesion) => {
+          const fecha = new Date(sesion.fecha)
+          setFechaSeleccionada(fecha)
+          setMesVisible(new Date(fecha.getFullYear(), fecha.getMonth(), 1))
+          setVista("calendario")
+        }}
       />
 
       {errorMigracion && (

@@ -3,6 +3,7 @@ import type { Familia } from './familias'
 export interface SesionProgramada {
   familia: Familia
   etapa: EtapaRutaRegular
+  numeroSesion: number
   numeroMes: number
   fecha: Date
   fechaOriginal: Date
@@ -124,6 +125,7 @@ export function calcularSesionesRutaRegular(
     familia: Familia,
     fechaOriginal: Date,
     etapa: EtapaRutaRegular,
+    numeroSesion: number,
     numeroMes: number
   ) => {
     const fechaOriginalKey = toDateKey(fechaOriginal)
@@ -138,6 +140,7 @@ export function calcularSesionesRutaRegular(
     sesionesSemana.push({
       familia,
       etapa,
+      numeroSesion,
       numeroMes,
       fecha: new Date(fecha),
       fechaOriginal: new Date(fechaOriginal),
@@ -151,7 +154,7 @@ export function calcularSesionesRutaRegular(
     const fechaInicio = parseDateKey(familia.fechaInicio)
     if (!fechaInicio) continue
 
-    agregarSesion(familia, fechaInicio, 1, 1)
+    agregarSesion(familia, fechaInicio, 1, 1, 1)
 
     const inicioEtapaDos = sumarMeses(fechaInicio, 1)
     for (let indiceSesion = 0; indiceSesion < SESIONES_POR_ETAPA[2]; indiceSesion += 1) {
@@ -160,16 +163,32 @@ export function calcularSesionesRutaRegular(
         familia,
         fechaSesion,
         2,
+        SESIONES_POR_ETAPA[1] + indiceSesion + 1,
         obtenerNumeroMes(fechaInicio, fechaSesion) ?? 2
       )
     }
 
     const mesesEtapaTres = [4, 6, 8, 10, 13, 16, 19, 22]
-    for (const numeroMes of mesesEtapaTres) {
-      agregarSesion(familia, sumarMeses(fechaInicio, numeroMes - 1), 3, numeroMes)
+    for (const [indiceSesion, numeroMes] of mesesEtapaTres.entries()) {
+      agregarSesion(
+        familia,
+        sumarMeses(fechaInicio, numeroMes - 1),
+        3,
+        SESIONES_POR_ETAPA[1] + SESIONES_POR_ETAPA[2] + indiceSesion + 1,
+        numeroMes
+      )
     }
 
-    agregarSesion(familia, sumarMeses(fechaInicio, 23), 4, 24)
+    agregarSesion(
+      familia,
+      sumarMeses(fechaInicio, 23),
+      4,
+      SESIONES_POR_ETAPA[1] +
+        SESIONES_POR_ETAPA[2] +
+        SESIONES_POR_ETAPA[3] +
+        1,
+      24
+    )
   }
 
   return sesiones

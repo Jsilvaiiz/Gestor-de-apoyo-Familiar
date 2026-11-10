@@ -181,3 +181,46 @@ export async function reprogramarSesionFamilia(
 
   return familiaActualizada;
 }
+
+export async function editarObservacionFamilia(
+  familiaId: string,
+  observacionId: string,
+  texto: string
+): Promise<Familia> {
+  const textoActualizado = texto.trim();
+  if (!textoActualizado) {
+    throw new Error("El comentario no puede quedar vacío");
+  }
+  if (textoActualizado.length > 2000) {
+    throw new Error("El comentario no puede superar los 2000 caracteres");
+  }
+
+  const familias = await leerFamilias();
+  const indiceFamilia = familias.findIndex((familia) => familia.id === familiaId);
+  if (indiceFamilia === -1) {
+    throw new Error("La familia ya no existe");
+  }
+
+  const familia = familias[indiceFamilia];
+  const observaciones = familia.observaciones ?? [];
+  const indiceObservacion = observaciones.findIndex(
+    (observacion) => observacion.id === observacionId
+  );
+  if (indiceObservacion === -1) {
+    throw new Error("El comentario ya no existe");
+  }
+
+  const observacionesActualizadas = [...observaciones];
+  observacionesActualizadas[indiceObservacion] = {
+    ...observacionesActualizadas[indiceObservacion],
+    texto: textoActualizado,
+  };
+  const familiaActualizada = {
+    ...familia,
+    observaciones: observacionesActualizadas,
+  };
+  familias[indiceFamilia] = familiaActualizada;
+  await escribirFamilias(familias);
+
+  return familiaActualizada;
+}

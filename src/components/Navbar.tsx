@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   CalendarDays,
-  Users,
-  UserPlus,
   Ellipsis,
   Tags,
 } from "lucide-react";
+import SnippetAlertas from "./SnippetAlertas";
+import type { SesionProgramada } from "../utils/rutaRegular";
 
 type Vista =
   | "calendario"
@@ -20,6 +20,7 @@ interface NavbarProps {
   fechaSeleccionada: Date;
   onCambiarVista: (vista: Vista) => void;
   onVolverAHoy: () => void;
+  onIrASesion: (sesion: SesionProgramada) => void;
 }
 
 export function Navbar({
@@ -27,6 +28,7 @@ export function Navbar({
   fechaSeleccionada,
   onCambiarVista,
   onVolverAHoy,
+  onIrASesion,
 }: NavbarProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -112,7 +114,7 @@ export function Navbar({
   return (
     <nav className="grid w-full shrink-0 grid-cols-3 items-center gap-3 border-b border-zinc-800 bg-neutral-900 px-5 py-3 text-white">
 
-      <div className="min-w-0 text-left">
+      <div className="flex min-w-0 items-center gap-2 text-left">
         <button
           type="button"
           onClick={() => {
@@ -130,6 +132,7 @@ export function Navbar({
             {fechaActual}
           </span>
         </button>
+        <SnippetAlertas onSeleccionarSesion={onIrASesion} />
       </div>
 
       <div className="min-w-0 text-center">
