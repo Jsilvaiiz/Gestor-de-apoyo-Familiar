@@ -40,6 +40,7 @@ interface SnippetSesionProgramadaProps {
   sesion: SesionProgramada
   etiquetas: Etiqueta[]
   cantidadEnElDia: number
+  altoDisponible?: number
   abierta: boolean
   onStartDrag: (
     sesion: SesionProgramada,
@@ -57,6 +58,7 @@ export default function SnippetSesionProgramada({
   sesion,
   etiquetas,
   cantidadEnElDia,
+  altoDisponible,
   abierta,
   onStartDrag,
   onClick,
@@ -64,14 +66,18 @@ export default function SnippetSesionProgramada({
   onCerrar,
 }: SnippetSesionProgramadaProps) {
   const estilo = ETAPA_COLOR[sesion.etapa]
-  const width = Math.max(36, 72 - (cantidadEnElDia - 1) * 5)
-  const fontSize = Math.max(6, 12 - (cantidadEnElDia - 1))
+  const height = Math.min(
+    68,
+    altoDisponible ?? Math.max(28, 68 - (cantidadEnElDia - 1) * 8)
+  )
+  const fontSize = Math.max(8, Math.min(12, height * 0.42))
+  const padding = Math.max(1, Math.min(4, height * 0.12))
   const arrastrable = sesion.etapa !== 1
 
   return (
     <div
-      className="relative min-h-0"
-      style={{ flex: '0 1 auto', width, maxWidth: '100%' }}
+      className="relative min-h-0 min-w-0 shrink-0"
+      style={{ width: 68, height, maxWidth: '100%' }}
     >
       <button
         type="button"
@@ -89,11 +95,10 @@ export default function SnippetSesionProgramada({
           fontSize,
           fontFamily: '"Segoe Print", "Comic Sans MS", cursive',
           fontWeight: 600,
-          lineHeight: 2,
-          padding: '4px',
-          minHeight: 20,
-          whiteSpace: 'normal',
-          overflowWrap: 'anywhere',
+          lineHeight: 1.05,
+          padding: `${padding}px`,
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
           boxShadow:
             '2px 4px 8px rgba(0, 0, 0, 0.48), 0 1px 2px rgba(0, 0, 0, 0.35)',
         }}

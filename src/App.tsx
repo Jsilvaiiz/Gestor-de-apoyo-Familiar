@@ -71,6 +71,11 @@ function App() {
           setMesVisible(new Date(fecha.getFullYear(), fecha.getMonth(), 1))
           setVista("calendario")
         }}
+        onIrAEtiqueta={(fecha) => {
+          setFechaSeleccionada(fecha)
+          setMesVisible(new Date(fecha.getFullYear(), fecha.getMonth(), 1))
+          setVista("calendario")
+        }}
       />
 
       {errorMigracion && (

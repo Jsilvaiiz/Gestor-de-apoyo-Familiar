@@ -21,6 +21,7 @@ interface NavbarProps {
   onCambiarVista: (vista: Vista) => void;
   onVolverAHoy: () => void;
   onIrASesion: (sesion: SesionProgramada) => void;
+  onIrAEtiqueta: (fecha: Date) => void;
 }
 
 export function Navbar({
@@ -29,6 +30,7 @@ export function Navbar({
   onCambiarVista,
   onVolverAHoy,
   onIrASesion,
+  onIrAEtiqueta,
 }: NavbarProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -132,7 +134,10 @@ export function Navbar({
             {fechaActual}
           </span>
         </button>
-        <SnippetAlertas onSeleccionarSesion={onIrASesion} />
+        <SnippetAlertas
+          onSeleccionarSesion={onIrASesion}
+          onSeleccionarEtiqueta={onIrAEtiqueta}
+        />
       </div>
 
       <div className="min-w-0 text-center">

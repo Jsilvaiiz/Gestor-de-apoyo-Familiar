@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { leerFamilias, type Familia } from '../utils/familias'
 import { leerEtiquetas, type Etiqueta } from '../utils/etiquetas'
 import {
@@ -10,6 +10,12 @@ import {
 } from '../utils/rutaRegular'
 import SnippetSesionProgramada from './SnippetSesionProgramada'
 import { useCalendarSessionDrag } from './useCalendarSessionDrag'
+import {
+  BotonNuevaEtiquetaCalendario,
+  EtiquetaDiaCalendario,
+  EtiquetasCalendarioProvider,
+  useEtiquetasCalendario,
+} from './SnippetEtiquetasCalendario'
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const ETAPA_ESTILOS: Record<EtapaRutaRegular, string> = {
@@ -43,12 +49,16 @@ function getSesionKey(sesion: SesionProgramada) {
   return `${sesion.familia.id}:${toDateKey(sesion.fechaOriginal)}`
 }
 
-function SnippetCalendar({
+function CalendarioContenido({
   selectedDate,
   onSelectDate,
   visibleMonth,
   onVisibleMonthChange,
 }: SnippetCalendarProps) {
+  const {
+    etiquetas: etiquetasCalendario,
+    fechaDestinoArrastre: fechaDestinoEtiqueta,
+  } = useEtiquetasCalendario()
   const todayKey = toDateKey(new Date())
   const [familias, setFamilias] = useState<Familia[]>([])
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([])
@@ -56,6 +66,8 @@ function SnippetCalendar({
   const [sesionAbiertaKey, setSesionAbiertaKey] = useState<string | null>(null)
   const [familiasSeleccionadas, setFamiliasSeleccionadas] = useState<string[] | null>(null)
   const [filtroFamiliasAbierto, setFiltroFamiliasAbierto] = useState(false)
+  const calendarioGridRef = useRef<HTMLDivElement>(null)
+  const [altoFilaCalendario, setAltoFilaCalendario] = useState(0)
   const {
     fechaDestinoArrastre,
     tarjetaArrastrada,
@@ -93,7 +105,7 @@ function SnippetCalendar({
       } catch (error) {
         if (mounted) {
           setErrorFamilias(
-            `No se pudieron cargar las sesiones de las familias: ${String(error)}`
+            `No se pudieron cargar los datos del calendario: ${String(error)}`
           )
         }
       }
@@ -104,6 +116,19 @@ function SnippetCalendar({
     return () => {
       mounted = false
     }
+  }, [])
+
+  useEffect(() => {
+    const grid = calendarioGridRef.current
+    if (!grid) return
+
+    const observer = new ResizeObserver(() => {
+      setAltoFilaCalendario(grid.clientHeight / 6)
+    })
+    observer.observe(grid)
+    setAltoFilaCalendario(grid.clientHeight / 6)
+
+    return () => observer.disconnect()
   }, [])
 
   const calendarDays = useMemo(() => {
@@ -182,7 +207,8 @@ function SnippetCalendar({
         
 
           <div className="relative z-40 grid grid-cols-[1fr_auto_1fr] items-center py-1 text-sm font-medium text-zinc-400">
-            <div className="relative justify-self-start pl-2">
+            <div className="relative flex items-center gap-1 justify-self-start pl-2">
+              <BotonNuevaEtiquetaCalendario fecha={selectedDate} />
               <button
                 type="button"
                 aria-expanded={filtroFamiliasAbierto}
@@ -272,7 +298,10 @@ function SnippetCalendar({
           ))}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-6 gap-px bg-zinc-800/40">
+        <div
+          ref={calendarioGridRef}
+          className="grid min-h-0 flex-1 grid-rows-6 gap-px bg-zinc-800/40"
+        >
           {Array.from({ length: 6 }, (_, weekIndex) => {
             const weekDays = calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7)
             const weekKey = toDateKey(weekDays[0])
@@ -302,6 +331,9 @@ function SnippetCalendar({
                   const sesionesDelDia = sesionesSemana.filter(
                     (sesion) => toDateKey(sesion.fecha) === dateKey
                   )
+                  const etiquetasDelDia = etiquetasCalendario.filter(
+                    (etiqueta) => etiqueta.fecha === dateKey
+                  )
                   const fondoDia = isWeekend
                     ? '!bg-zinc-700'
                     : isToday
@@ -328,6 +360,9 @@ function SnippetCalendar({
                           ...(fechaDestinoArrastre === dateKey
                             ? ['z-20 ring-2 ring-inset ring-sky-400']
                             : []),
+                          ...(fechaDestinoEtiqueta === dateKey
+                            ? ['z-20 ring-2 ring-inset ring-emerald-400']
+                            : []),
                         ].join(' ')
                       }`}
                     >
@@ -349,48 +384,85 @@ function SnippetCalendar({
                           {date.getDate()}
                         </span>
                       </button>
-                      {sesionesDelDia.length > 0 && (
+                      {(sesionesDelDia.length > 0 || etiquetasDelDia.length > 0) && (
                         <div
-                          className="pointer-events-none absolute z-10 flex flex-col items-center justify-center overflow-visible"
+                          className="pointer-events-none absolute z-10 flex flex-row items-center overflow-visible"
                           style={{
                             top: 28,
-                            left: 0,
-                            right: 0,
+                            left: 2,
+                            right: 4,
                             bottom: 2,
-                            gap: sesionesDelDia.length > 1 ? 2 : 4,
                           }}
                         >
-                          {sesionesDelDia.map((sesion, indice) => (
-                            <SnippetSesionProgramada
-                              key={`${sesion.familia.id}-${indice}`}
-                              sesion={sesion}
-                              etiquetas={etiquetas}
-                              cantidadEnElDia={sesionesDelDia.length}
-                              abierta={sesionAbiertaKey === getSesionKey(sesion)}
-                              onStartDrag={iniciarArrastre}
-                              onClick={(sesionClicada, event) => {
-                                event.stopPropagation()
-                                if (debeIgnorarClick()) {
-                                  event.preventDefault()
-                                  return
-                                }
-                                const sesionKey = getSesionKey(sesionClicada)
-                                setSesionAbiertaKey((abierta) =>
-                                  abierta === sesionKey ? null : sesionKey
-                                )
+                          {sesionesDelDia.length > 0 && (
+                            <div
+                              className={`pointer-events-none flex min-w-0 flex-col items-center justify-center overflow-visible ${
+                                etiquetasDelDia.length > 0 ? 'w-[68%]' : 'w-full'
+                              }`}
+                              style={{
+                                gap: Math.max(0, 3 - sesionesDelDia.length),
                               }}
-                              onFamiliaActualizada={(familiaActualizada) =>
-                                setFamilias((actuales) =>
-                                  actuales.map((familia) =>
-                                    familia.id === familiaActualizada.id
-                                      ? familiaActualizada
-                                      : familia
-                                  )
-                                )
-                              }
-                              onCerrar={() => setSesionAbiertaKey(null)}
-                            />
-                          ))}
+                            >
+                              {sesionesDelDia.map((sesion, indice) => (
+                                <SnippetSesionProgramada
+                                  key={`${sesion.familia.id}-${indice}`}
+                                  sesion={sesion}
+                                  etiquetas={etiquetas}
+                                  cantidadEnElDia={sesionesDelDia.length}
+                                  altoDisponible={
+                                    altoFilaCalendario > 0
+                                      ? Math.max(
+                                          10,
+                                          (altoFilaCalendario -
+                                            32 -
+                                            Math.max(0, sesionesDelDia.length - 1)) /
+                                            sesionesDelDia.length
+                                        )
+                                      : undefined
+                                  }
+                                  abierta={sesionAbiertaKey === getSesionKey(sesion)}
+                                  onStartDrag={iniciarArrastre}
+                                  onClick={(sesionClicada, event) => {
+                                    event.stopPropagation()
+                                    if (debeIgnorarClick()) {
+                                      event.preventDefault()
+                                      return
+                                    }
+                                    const sesionKey = getSesionKey(sesionClicada)
+                                    setSesionAbiertaKey((abierta) =>
+                                      abierta === sesionKey ? null : sesionKey
+                                    )
+                                  }}
+                                  onFamiliaActualizada={(familiaActualizada) =>
+                                    setFamilias((actuales) =>
+                                      actuales.map((familia) =>
+                                        familia.id === familiaActualizada.id
+                                          ? familiaActualizada
+                                          : familia
+                                      )
+                                    )
+                                  }
+                                  onCerrar={() => setSesionAbiertaKey(null)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {etiquetasDelDia.length > 0 && (
+                            <div
+                              className={`pointer-events-none flex min-w-0 flex-col items-end justify-center gap-1 ${
+                                sesionesDelDia.length > 0 ? 'w-[32%]' : 'ml-auto w-full'
+                              }`}
+                            >
+                              {etiquetasDelDia.map((etiqueta) => (
+                                <EtiquetaDiaCalendario
+                                  key={etiqueta.id}
+                                  etiqueta={etiqueta}
+                                  fecha={date}
+                                  onSelectDate={onSelectDate}
+                                />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                       {date.getDay() === 1 && etapasSemana.length > 0 && sesionesDelDia.length === 0 && (
@@ -418,7 +490,6 @@ function SnippetCalendar({
             {errorFamilias}
           </p>
         )}
-
 
           {/* Zona izquierda: mes anterior */}
           <div className="group/izquierda absolute left-0 top-0 bottom-0 z-20 flex w-14 items-center justify-start">
@@ -478,4 +549,10 @@ function SnippetCalendar({
   )
 }
 
-export default SnippetCalendar
+export default function SnippetCalendar(props: SnippetCalendarProps) {
+  return (
+    <EtiquetasCalendarioProvider>
+      <CalendarioContenido {...props} />
+    </EtiquetasCalendarioProvider>
+  )
+}
