@@ -1,64 +1,95 @@
-import React from 'react';
-import { CalendarDays, Users } from 'lucide-react';
 
+import React from 'react';
+import { CalendarDays, Users, UserPlus } from 'lucide-react';
 
 interface NavbarProps {
-  vistaActual: 'calendario' | 'FamiliaList' | 'FamiliaForm';
-  onCambiarVista: (vista: 'calendario' | 'FamiliaList' | 'FamiliaForm') => void;
+  vistaActual: "calendario" | "FamiliaList" | "FamiliaForm";
+  fechaSeleccionada: Date;
+  onCambiarVista: (
+    vista: "calendario" | "FamiliaList" | "FamiliaForm"
+  ) => void;
   onVolverAHoy: () => void;
 }
 
-export function Navbar({ vistaActual, onCambiarVista, onVolverAHoy }: NavbarProps) {
-  const titulo = vistaActual === 'calendario' ? 'Ruta regular' : 'Familias';
-  const fecha = new Date().toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+export function Navbar({
+  vistaActual,
+  fechaSeleccionada,
+  onCambiarVista,
+  onVolverAHoy,
+}: NavbarProps) {
+
+  const formatoFecha = (fecha: Date) => {
+    const dia = fecha.getDate();
+    const mes = fecha.toLocaleDateString("es-CL", {
+      month: "long",
+    });
+    const anio = fecha.getFullYear();
+
+    return `${dia} de ${mes} de ${anio}`;
+  };
+
+  const fechaActual = formatoFecha(new Date());
+  const fechaElegida = formatoFecha(fechaSeleccionada);
+
+  const estiloBoton = (activo: boolean) =>
+    `flex items-center gap-2 rounded-lg px-3 py-2 text-sm
+     transition-colors !border-0 !shadow-none
+     ${
+       activo
+         ? "!bg-zinc-800 text-white"
+         : "!bg-transparent text-zinc-300 hover:!bg-zinc-800 hover:text-white"
+     }`;
 
   return (
-    <nav className="grid w-full shrink-0 grid-cols-3 items-center border-b border-zinc-800 bg-neutral-900 px-5 py-2.5">
-      <div className="min-w-0 text-left">
-        <h1 className="truncate text-lg font-semibold tracking-wide text-zinc-200">
-          {titulo}
-        </h1>
-      </div>
+    <nav className="grid w-full shrink-0 grid-cols-3 items-center gap-3 border-b border-zinc-800 bg-neutral-900 px-5 py-3 text-white">
 
-      <div className="text-center text-lg capitalize text-zinc-300">
+      {/* Fecha actual: regresar al día de hoy */}
+      <div className="min-w-0 text-left">
         <button
           type="button"
-          aria-label={`Ir a hoy: ${fecha}`}
           onClick={onVolverAHoy}
-          className="!m-0 !border-0 !bg-transparent !px-0 !py-0 !shadow-none rounded-none text-lg capitalize text-zinc-300 hover:text-white "
+          title="Volver al calendario de hoy"
+          className="!bg-transparent !border-0 !shadow-none
+                     text-left hover:text-blue-300"
         >
-        {fecha}
+          <span className="block text-xs text-zinc-400">
+            Fecha actual
+          </span>
+
+          <span className="block text-sm font-semibold capitalize">
+            {fechaActual}
+          </span>
         </button>
       </div>
 
-      <div className="flex items-center justify-self-end gap-1">
-        {/* <button
-          type="button"
-          title="Calendario"
-          onClick={() => onCambiarVista('calendario')}
-          className={`flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-medium transition !outline-none !shadow-none ${
-            vistaActual === 'calendario'
-              ? '!bg-zinc-900 text-white'
-              : '!bg-transparent text-zinc-400 hover:!bg-zinc-800 hover:text-zinc-200'
-          }`}
-        >
-          <CalendarDays size={16} aria-hidden="true" />
-          <span>Calendario</span>
-        </button> */}
+      {/* Fecha seleccionada en el calendario */}
+      <div className="min-w-0 text-center">
+        <span className="block text-xs text-zinc-400">
+          Fecha seleccionada
+        </span>
+
+        <span className="block text-sm font-semibold capitalize">
+          {fechaElegida}
+        </span>
+      </div>
+
+      {/* Navegación */}
+      <div className="flex items-center justify-end gap-2">
 
         <button
           type="button"
-          title="Familias"
-          onClick={() => onCambiarVista('FamiliaList')}
-          className={`flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-medium transition !outline-none !shadow-none ${
-            vistaActual === 'FamiliaList'
-              ? '!bg-zinc-900 text-white'
-              : '!bg-transparent text-zinc-400 hover:!bg-zinc-800 hover:text-zinc-200'
-          }`}
+          onClick={() => onCambiarVista("calendario")}
+          aria-label="Ir al calendario"
+          title="Calendario"
+          className={estiloBoton(vistaActual === "calendario")}
+        >
+          <CalendarDays size={18} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onCambiarVista("FamiliaList")}
+          className={estiloBoton(vistaActual === "FamiliaList")}
         >
           <Users size={16} aria-hidden="true" />
           <span>Familias</span>
@@ -66,17 +97,13 @@ export function Navbar({ vistaActual, onCambiarVista, onVolverAHoy }: NavbarProp
 
         <button
           type="button"
-          title="Familias"
-          onClick={() => onCambiarVista('FamiliaForm')}
-          className={`flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-medium transition !outline-none !shadow-none ${
-            vistaActual === 'FamiliaForm'
-              ? '!bg-zinc-900 text-white'
-              : '!bg-transparent text-zinc-400 hover:!bg-zinc-800 hover:text-zinc-200'
-          }`}
+          onClick={() => onCambiarVista("FamiliaForm")}
+          className={estiloBoton(vistaActual === "FamiliaForm")}
         >
-          <Users size={16} aria-hidden="true" />
-          <span>Familias Formulario</span>
+          <UserPlus size={16} aria-hidden="true" />
+          <span>Registrar familia</span>
         </button>
+
       </div>
     </nav>
   );
