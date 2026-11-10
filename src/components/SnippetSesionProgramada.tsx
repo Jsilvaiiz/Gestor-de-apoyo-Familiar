@@ -51,6 +51,7 @@ export default function SnippetSesionProgramada({
   const estilo = ETAPA_COLOR[sesion.etapa]
   const width = Math.max(36, 72 - (cantidadEnElDia - 1) * 5)
   const fontSize = Math.max(6, 12 - (cantidadEnElDia - 1))
+  const arrastrable = sesion.etapa !== 1
 
   return (
     <div
@@ -62,7 +63,9 @@ export default function SnippetSesionProgramada({
         aria-label={`Ver sesión de ${sesion.familia.nombre}`}
         aria-haspopup="dialog"
         aria-expanded={abierta}
-        onPointerDown={(event) => onStartDrag(sesion, event)}
+        onPointerDown={(event) => {
+          if (arrastrable) onStartDrag(sesion, event)
+        }}
         onClick={(event) => onClick(sesion, event)}
         title={`${sesion.familia.nombre} · ${NOMBRE_ETAPA[sesion.etapa]}`}
         style={{
@@ -75,7 +78,11 @@ export default function SnippetSesionProgramada({
           overflowWrap: 'anywhere',
           boxShadow: '0 3px 6px rgba(0, 0, 0, 0.25)',
         }}
-        className="pointer-events-auto block h-full w-full min-h-0 touch-none select-none overflow-hidden text-center font-bold !rounded-none border border-black/10 capitalize transition hover:brightness-105 hover:cursor-grab active:cursor-grabbing !outline-none focus:!outline-none focus:!ring-0"
+        className={`pointer-events-auto block h-full w-full min-h-0 select-none overflow-hidden text-center font-bold !rounded-none border border-black/10 capitalize transition hover:brightness-105 !outline-none focus:!outline-none focus:!ring-0 ${
+          arrastrable
+            ? 'touch-none hover:cursor-grab active:cursor-grabbing'
+            : 'cursor-default'
+        }`}
       >
         {sesion.familia.nombre}
       </button>
