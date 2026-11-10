@@ -13,6 +13,11 @@ export interface Observacion {
   fechaCreacion: string;
 }
 
+export interface SesionReprogramada {
+  fechaOriginal: string;
+  fechaNueva: string;
+}
+
 export interface Familia {
   id: string;
   nombre: string;
@@ -20,6 +25,7 @@ export interface Familia {
   telefono: string;
   direccion: string;
   fechaInicio?: string;
+  sesionesReprogramadas?: SesionReprogramada[];
   archivada?: boolean;
   etiquetas?: string[];
   observaciones?: Observacion[];
@@ -37,6 +43,21 @@ async function escribirFamilias(familias: Familia[]): Promise<void> {
   await writeTextFile(
     await join(directorio, "familias.json"),
     JSON.stringify(familias, null, 2)
+  );
+}
+
+function esFechaValida(fecha: string): boolean {
+  const partes = fecha.split("-").map(Number);
+  if (partes.length !== 3 || partes.some((parte) => !Number.isInteger(parte))) {
+    return false;
+  }
+
+  const [year, month, day] = partes;
+  const valor = new Date(year, month - 1, day);
+  return (
+    valor.getFullYear() === year &&
+    valor.getMonth() === month - 1 &&
+    valor.getDate() === day
   );
 }
 
@@ -127,4 +148,36 @@ export async function cambiarEstadoFamilia(
   familia.archivada = archivar;
 
   await escribirFamilias(familias);
+}
+
+export async function reprogramarSesionFamilia(
+  id: string,
+  fechaOriginal: string,
+  fechaNueva: string
+): Promise<Familia> {
+  if (!esFechaValida(fechaOriginal) || !esFechaValida(fechaNueva)) {
+    throw new Error("La fecha de la sesión no es válida");
+  }
+
+  const familias = await leerFamilias();
+  const indice = familias.findIndex((familia) => familia.id === id);
+
+  if (indice === -1) {
+    throw new Error("No se encontró la familia");
+  }
+
+  const familia = familias[indice];
+  const sesionesReprogramadas = (familia.sesionesReprogramadas ?? []).filter(
+    (sesion) => sesion.fechaOriginal !== fechaOriginal
+  );
+
+  if (fechaOriginal !== fechaNueva) {
+    sesionesReprogramadas.push({ fechaOriginal, fechaNueva });
+  }
+
+  const familiaActualizada = { ...familia, sesionesReprogramadas };
+  familias[indice] = familiaActualizada;
+  await escribirFamilias(familias);
+
+  return familiaActualizada;
 }

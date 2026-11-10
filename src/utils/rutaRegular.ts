@@ -5,6 +5,7 @@ export interface SesionProgramada {
   etapa: EtapaRutaRegular
   numeroMes: number
   fecha: Date
+  fechaOriginal: Date
 }
 
 export type EtapaRutaRegular = 1 | 2 | 3 | 4
@@ -121,13 +122,26 @@ export function calcularSesionesRutaRegular(
   const sesiones = new Map<string, SesionProgramada[]>()
   const agregarSesion = (
     familia: Familia,
-    fecha: Date,
+    fechaOriginal: Date,
     etapa: EtapaRutaRegular,
     numeroMes: number
   ) => {
+    const fechaOriginalKey = toDateKey(fechaOriginal)
+    const fechaReprogramada = familia.sesionesReprogramadas?.find(
+      (sesion) => sesion.fechaOriginal === fechaOriginalKey
+    )
+    const fecha = fechaReprogramada
+      ? parseDateKey(fechaReprogramada.fechaNueva) ?? fechaOriginal
+      : fechaOriginal
     const semanaKey = toDateKey(mondayOf(fecha))
     const sesionesSemana = sesiones.get(semanaKey) ?? []
-    sesionesSemana.push({ familia, etapa, numeroMes, fecha: new Date(fecha) })
+    sesionesSemana.push({
+      familia,
+      etapa,
+      numeroMes,
+      fecha: new Date(fecha),
+      fechaOriginal: new Date(fechaOriginal),
+    })
     sesiones.set(semanaKey, sesionesSemana)
   }
 

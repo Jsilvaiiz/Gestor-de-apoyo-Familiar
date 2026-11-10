@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { leerFamilias, type Familia } from '../utils/familias'
 import { leerEtiquetas, type Etiqueta } from '../utils/etiquetas'
 import {
@@ -8,6 +8,8 @@ import {
   type EtapaRutaRegular,
   type SesionProgramada,
 } from '../utils/rutaRegular'
+import SnippetSesionProgramada from './SnippetSesionProgramada'
+import { useCalendarSessionDrag } from './useCalendarSessionDrag'
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const ETAPA_ESTILOS: Record<EtapaRutaRegular, string> = {
@@ -15,12 +17,6 @@ const ETAPA_ESTILOS: Record<EtapaRutaRegular, string> = {
   2: 'bg-yellow-400 text-zinc-900',
   3: 'bg-blue-800 text-white',
   4: 'bg-violet-700 text-white',
-}
-const ETAPA_NOTA: Record<EtapaRutaRegular, string> = {
-  1: 'bg-purple-200',
-  2: 'bg-yellow-200',
-  3: 'bg-sky-200',
-  4: 'bg-violet-200',
 }
 const NOMBRE_ETAPA: Record<EtapaRutaRegular, string> = {
   1: 'Etapa I',
@@ -54,6 +50,25 @@ function SnippetCalendar({
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([])
   const [errorFamilias, setErrorFamilias] = useState('')
   const [sesionAbierta, setSesionAbierta] = useState<SesionProgramada | null>(null)
+  const {
+    fechaDestinoArrastre,
+    tarjetaArrastrada,
+    iniciarArrastre,
+    debeIgnorarClick,
+  } = useCalendarSessionDrag({
+    familias,
+    onFamiliaActualizada: (familiaActualizada) =>
+      setFamilias((actuales) =>
+        actuales.map((familia) =>
+          familia.id === familiaActualizada.id ? familiaActualizada : familia
+        )
+      ),
+    onError: setErrorFamilias,
+    onMoveComplete: () => {
+      setSesionAbierta(null)
+      setErrorFamilias('')
+    },
+  })
 
   useEffect(() => {
     let mounted = true
@@ -107,6 +122,22 @@ function SnippetCalendar({
 
   return (
     <section className="h-full min-h-0 w-full text-left text-white">
+      {tarjetaArrastrada && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed z-[100] -translate-y-1/2 rounded-sm border border-black/30 px-2 py-1 text-xs font-bold capitalize shadow-xl opacity-90"
+          style={{
+            left: tarjetaArrastrada.x + 12,
+            top: tarjetaArrastrada.y + 12,
+            backgroundColor: ['#c084fc', '#facc15', '#1e40af', '#6d28d9'][
+              tarjetaArrastrada.etapa - 1
+            ],
+            color: tarjetaArrastrada.etapa === 2 ? '#18181b' : '#ffffff',
+          }}
+        >
+          {tarjetaArrastrada.nombre}
+        </div>
+      )}
       <div className="group relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-zinc-900">
         
         
@@ -185,10 +216,16 @@ function SnippetCalendar({
                   return (
                     <div
                       key={dateKey}
+                      data-calendar-date={dateKey}
                       className={`relative min-h-0 min-w-0 ${
-                        sesionesDelDia.some((sesion) => sesion === sesionAbierta)
-                          ? 'z-30'
-                          : ''
+                        [
+                          ...(sesionesDelDia.some((sesion) => sesion === sesionAbierta)
+                            ? ['z-30']
+                            : []),
+                          ...(fechaDestinoArrastre === dateKey
+                            ? ['z-20 ring-2 ring-inset ring-sky-400']
+                            : []),
+                        ].join(' ')
                       }`}
                     >
                       <button
@@ -202,7 +239,7 @@ function SnippetCalendar({
                             ? '!bg-[#0C3956]'
                             : isWeekend
                               ? '!bg-zinc-700'
-                              : sesionesSemana.length > 0
+                              : sesionesDelDia.length > 0
                                 ? '!bg-teal-950/70'
                                 : '!bg-zinc-800'
                         } p-1 text-left transition hover:bg-zinc-800 ${
@@ -218,46 +255,37 @@ function SnippetCalendar({
                         </span>
                       </button>
                       {sesionesDelDia.length > 0 && (
-                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-start justify-start !gap-2 p-1 pt-7">
-                          {sesionesDelDia.map((sesion, indice) => {
-                            const COLORES_ETAPA: Record<number, { bg: string; text: string }> = {
-                              1: { bg: '#c084fc', text: '#ffffff' }, 
-                              2: { bg: '#facc15', text: '#18181b' }, 
-                              3: { bg: '#1e40af', text: '#ffffff' },
-                              4: { bg: '#6d28d9', text: '#ffffff' }, 
-                            }
-
-                            const estilo = COLORES_ETAPA[sesion.etapa] ?? { bg: '#3f3f46', text: '#ffffff' }
-
-                            return (
-                              <div key={`${sesion.familia.id}-${indice}`} className="relative max-w-full">
-                                <button
-                                  type="button"
-                                  aria-label={`Ver sesión de ${sesion.familia.nombre}`}
-                                  aria-haspopup="dialog"
-                                  aria-expanded={sesionAbierta === sesion}
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    setSesionAbierta(sesionAbierta === sesion ? null : sesion)
-                                  }}
-                                  title={`${sesion.familia.nombre} · ${NOMBRE_ETAPA[sesion.etapa]}`}
-                                  style={{ backgroundColor: estilo.bg, color: estilo.text }}
-                                  /* Post-it pequeño alineado a la izquierda con el nombre completo */
-                                  className="pointer-events-auto block max-w-full truncate !rounded-none border border-black/20 px-1.5 py-0.5 text-left text-[9px] font-bold capitalize leading-tight shadow-none transition hover:brightness-110 !outline-none focus:!outline-none focus:!ring-0"
-                                >
-                                  {sesion.familia.nombre}
-                                </button>
-
-                                {sesionAbierta === sesion && (
-                                  <SesionPopover
-                                    sesion={sesion}
-                                    etiquetas={etiquetas}
-                                    onCerrar={() => setSesionAbierta(null)}
-                                  />
-                                )}
-                              </div>
-                            )
-                          })}
+                        <div
+                          className="pointer-events-none absolute z-10 flex flex-col items-start overflow-visible"
+                          style={{
+                            top: 28,
+                            left: 4,
+                            right: 2,
+                            bottom: 2,
+                            gap: sesionesDelDia.length > 1 ? 2 : 4,
+                          }}
+                        >
+                          {sesionesDelDia.map((sesion, indice) => (
+                            <SnippetSesionProgramada
+                              key={`${sesion.familia.id}-${indice}`}
+                              sesion={sesion}
+                              etiquetas={etiquetas}
+                              cantidadEnElDia={sesionesDelDia.length}
+                              abierta={sesionAbierta === sesion}
+                              onStartDrag={iniciarArrastre}
+                              onClick={(sesionClicada, event) => {
+                                event.stopPropagation()
+                                if (debeIgnorarClick()) {
+                                  event.preventDefault()
+                                  return
+                                }
+                                setSesionAbierta(
+                                  sesionAbierta === sesionClicada ? null : sesionClicada
+                                )
+                              }}
+                              onCerrar={() => setSesionAbierta(null)}
+                            />
+                          ))}
                         </div>
                       )}
                       {date.getDay() === 1 && etapasSemana.length > 0 && sesionesDelDia.length === 0 && (
@@ -342,125 +370,6 @@ function SnippetCalendar({
 
       </div>
     </section>
-  )
-}
-
-interface SesionPopoverProps {
-  sesion: SesionProgramada
-  etiquetas: Etiqueta[]
-  onCerrar: () => void
-}
-
-function SesionPopover({
-  sesion,
-  etiquetas,
-  onCerrar,
-}: SesionPopoverProps) {
-  const tarjetaRef = useRef<HTMLDivElement>(null)
-  const observaciones = [...(sesion.familia.observaciones ?? [])]
-    .sort(
-      (a, b) =>
-        new Date(b.fechaCreacion).getTime() -
-        new Date(a.fechaCreacion).getTime()
-    )
-    .slice(0, 3)
-  const etiquetasFamilia = (sesion.familia.etiquetas ?? []).map((valor) => {
-    const etiqueta = etiquetas.find(
-      (item) =>
-        item.id === valor ||
-        item.nombre.toLowerCase() === valor.toLowerCase()
-    )
-
-    return etiqueta ?? { id: valor, nombre: valor, color: '#52525b', activa: true }
-  })
-
-  useEffect(() => {
-    function cerrarAlHacerClicFuera(event: MouseEvent) {
-      if (
-        tarjetaRef.current &&
-        !tarjetaRef.current.contains(event.target as Node)
-      ) {
-        onCerrar()
-      }
-    }
-
-    function cerrarConEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') onCerrar()
-    }
-
-    document.addEventListener('mousedown', cerrarAlHacerClicFuera)
-    document.addEventListener('keydown', cerrarConEscape)
-
-    return () => {
-      document.removeEventListener('mousedown', cerrarAlHacerClicFuera)
-      document.removeEventListener('keydown', cerrarConEscape)
-    }
-  }, [onCerrar])
-
-  return (
-    <div
-      ref={tarjetaRef}
-      role="dialog"
-      aria-label={`Sesión de ${sesion.familia.nombre}`}
-      className={`absolute bottom-full left-0 z-50 mb-1 w-48 max-w-[75vw] max-h-44 overflow-y-auto rounded-sm p-2 text-zinc-900 shadow-lg ${ETAPA_NOTA[sesion.etapa]}`}
-    >
-      <div className="mb-1 flex items-start justify-between gap-1">
-        <h3 className="min-w-0 flex-1 truncate text-xs font-bold">
-          {sesion.familia.nombre}
-        </h3>
-        <button
-          type="button"
-          aria-label="Cerrar resumen de sesión"
-          onClick={onCerrar}
-          className="!border-0 !bg-transparent !p-0 text-sm leading-none text-zinc-700 !shadow-none hover:text-black"
-        >
-          ×
-        </button>
-      </div>
-      <p className="text-[10px] font-medium">
-        {sesion.fecha.toLocaleDateString('es-CL', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-      </p>
-      <p className="mb-1 text-[9px] opacity-70">
-        {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
-      </p>
-
-      <div className="mb-1">
-        {etiquetasFamilia.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {etiquetasFamilia.map((etiqueta) => (
-              <span
-                key={etiqueta.id}
-                className="rounded-sm px-1 py-0.5 text-[9px] font-medium text-white"
-                style={{ backgroundColor: etiqueta.color }}
-              >
-                {etiqueta.nombre}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="border-t border-black/15 pt-1">
-        {observaciones.length > 0 ? (
-          <div className="space-y-1">
-            {observaciones.map((observacion) => (
-              <p
-                key={observacion.id}
-                className="line-clamp-2 break-words text-[10px] leading-tight"
-              >
-                {observacion.texto}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[10px] italic opacity-60">Sin comentarios</p>
-        )}
-      </div>
-    </div>
   )
 }
 

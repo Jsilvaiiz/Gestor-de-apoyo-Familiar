@@ -154,7 +154,6 @@ export function Navbar({
           <CalendarDays size={18} aria-hidden="true" />
         </button>
 
-        {/* Menú de herramientas */}
         <div className="relative" ref={menuRef}>
 
           <button
