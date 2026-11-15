@@ -5,7 +5,8 @@ import {
   createDir,
   exists,
 } from "@tauri-apps/api/fs";
-import { desktopDir, join } from "@tauri-apps/api/path";
+import { invoke } from "@tauri-apps/api/tauri";
+import { obtenerArchivoFamilias, obtenerDirectorioFamilias } from "./rutasFamilias";
 
 export interface Observacion {
   id: string;
@@ -32,19 +33,14 @@ export interface Familia {
   observaciones?: Observacion[];
 }
 
-const CARPETA = "informaciónFamilias";
-
-async function obtenerArchivoFamilias(): Promise<string> {
-  return join(await desktopDir(), CARPETA, "familias.json");
-}
-
 async function escribirFamilias(familias: Familia[]): Promise<void> {
-  const directorio = await join(await desktopDir(), CARPETA);
+  const directorio = await obtenerDirectorioFamilias();
   await createDir(directorio, { recursive: true });
-  await writeTextFile(
-    await join(directorio, "familias.json"),
-    JSON.stringify(familias, null, 2)
-  );
+  const contenido = await invoke<string>("cifrar_datos", {
+    contenido: JSON.stringify(familias, null, 2),
+  });
+  await writeTextFile(await obtenerArchivoFamilias(), contenido);
+  window.dispatchEvent(new Event("familias-actualizadas"));
 }
 
 function esFechaValida(fecha: string): boolean {
@@ -72,11 +68,18 @@ export async function leerFamilias(): Promise<Familia[]> {
   }
 
   const contenido = await readTextFile(archivo);
-
-  const familias = JSON.parse(contenido);
+  const descifrado = await invoke<{ contenido: string; cifrado: boolean }>(
+    "descifrar_datos",
+    { contenido }
+  );
+  const familias = JSON.parse(descifrado.contenido);
 
   if (!Array.isArray(familias)) {
     throw new Error("El archivo de familias no es válido");
+  }
+
+  if (!descifrado.cifrado) {
+    await escribirFamilias(familias as Familia[]);
   }
 
   return familias as Familia[];

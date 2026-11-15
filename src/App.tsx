@@ -5,15 +5,12 @@ import FamiliaList from "./components/FamiliaList";
 import FamiliaForm from "./components/FamiliaForm";
 import AdministradorEtiquetas from "./components/AdministradorEtiquetas";
 import Navbar from "./components/Navbar";
+import type { Vista } from "./components/BarraLateral";
+import FamiliasExcelSync from "./components/FamiliasExcelSync";
+import BarraInferior from "./components/BarraInferior";
+import VisitasList from "./components/VisitasList";
 
 import { migrarEtiquetasAntiguas } from "./utils/migrarEtiquetas";
-
-// Vistas disponibles en la aplicación
-type Vista =
-  | "calendario"
-  | "FamiliaList"
-  | "FamiliaForm"
-  | "AdministradorEtiquetas";
 
 function App() {
   const [vista, setVista] = useState<Vista>("calendario");
@@ -86,6 +83,7 @@ function App() {
           {errorMigracion}
         </p>
       )}
+      <FamiliasExcelSync />
       {/* Contenido principal */}
       <main className="min-h-0 flex-1 overflow-y-auto bg-zinc-800 text-white">
 
@@ -102,9 +100,24 @@ function App() {
           <FamiliaForm />
         ) : vista === "AdministradorEtiquetas" ? (
           <AdministradorEtiquetas />
+        ) : vista === "VisitasList" ? (
+          <VisitasList
+            onSeleccionarSesion={(sesion) => {
+              setFechaSeleccionada(new Date(sesion.fecha));
+              setMesVisible(
+                new Date(
+                  sesion.fecha.getFullYear(),
+                  sesion.fecha.getMonth(),
+                  1
+                )
+              );
+              setVista("calendario");
+            }}
+          />
         ) : null}
 
       </main>
+      <BarraInferior />
     </div>
   );
 }

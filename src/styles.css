@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Tema oscuro: estilos base de la aplicación y del calendario. */
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -14,6 +15,33 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Tema oscuro: líneas explícitas en el borde de cada celda; los fondos van en .calendar-day. */
+.calendar-grid-lines {
+  border-color: #52525b;
+}
+
+.calendar-day-cell {
+  border-color: #52525b;
+}
+
+/* Tema oscuro: fines de semana y días ajenos al mes visible se atenúan. */
+.calendar-day--muted {
+  opacity: 0.62;
+}
+
+.calendar-day-number--outside {
+  color: #71717a;
+}
+
+/* Tema oscuro: el día actual resalta incluso si cae en fin de semana. */
+.calendar-day--today {
+  background-color: #0c3956 !important;
+}
+
+.calendar-day-number--today {
+  background-color: #2563eb;
 }
 
 .container {
@@ -113,4 +141,208 @@ button {
   button:active {
     background-color: #0f0f0f69;
   }
+}
+
+/* Tema claro: paleta pastel y contraste general de la interfaz. */
+:root[data-theme="claro"] {
+  color-scheme: light;
+  color: #3d3540;
+  background-color: #fdfee0;
+}
+
+:root[data-theme="claro"] body {
+  color: #3d3540;
+  background-color: #fdfee0;
+}
+
+:root[data-theme="claro"] #root,
+:root[data-theme="claro"] #root > div {
+  color: #3d3540;
+  background-color: #fdfee0 !important;
+}
+
+:root[data-theme="claro"] [class*="bg-neutral-950"],
+:root[data-theme="claro"] [class^="bg-neutral-900"],
+:root[data-theme="claro"] [class*=" bg-neutral-900"],
+:root[data-theme="claro"] [class^="bg-zinc-950"],
+:root[data-theme="claro"] [class*=" bg-zinc-950"],
+:root[data-theme="claro"] [class^="bg-zinc-900"],
+:root[data-theme="claro"] [class*=" bg-zinc-900"] {
+  background-color: #ffe4e1 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-zinc-800"],
+:root[data-theme="claro"] [class*=" bg-zinc-800"],
+:root[data-theme="claro"] [class^="!bg-zinc-800"],
+:root[data-theme="claro"] [class*=" !bg-zinc-800"] {
+  background-color: #fff4e1 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-zinc-700"],
+:root[data-theme="claro"] [class*=" bg-zinc-700"],
+:root[data-theme="claro"] [class^="bg-zinc-600"],
+:root[data-theme="claro"] [class*=" bg-zinc-600"] {
+  background-color: #dce4f9 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-blue-600"],
+:root[data-theme="claro"] [class*=" bg-blue-600"] {
+  background-color: #b0c2f2 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-blue-700"],
+:root[data-theme="claro"] [class*=" bg-blue-700"] {
+  background-color: #dce4f9 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-purple-400"],
+:root[data-theme="claro"] [class*=" bg-purple-400"] {
+  background-color: #f5dcf9 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-yellow-400"],
+:root[data-theme="claro"] [class*=" bg-yellow-400"] {
+  background-color: #ffe1ae !important;
+}
+
+:root[data-theme="claro"] [class^="bg-blue-800"],
+:root[data-theme="claro"] [class*=" bg-blue-800"] {
+  background-color: #b0c2f2 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-violet-700"],
+:root[data-theme="claro"] [class*=" bg-violet-700"] {
+  background-color: #e9b0f2 !important;
+}
+
+:root[data-theme="claro"] [class*="text-white"],
+:root[data-theme="claro"] [class*="text-zinc-100"],
+:root[data-theme="claro"] [class*="text-zinc-200"],
+:root[data-theme="claro"] [class*="text-zinc-300"] {
+  color: #3d3540 !important;
+}
+
+:root[data-theme="claro"] [class*="text-gray-300"],
+:root[data-theme="claro"] [class*="text-gray-400"] {
+  color: #665c69 !important;
+}
+
+:root[data-theme="claro"] [class*="text-zinc-400"],
+:root[data-theme="claro"] [class*="text-zinc-500"] {
+  color: #665c69 !important;
+}
+
+:root[data-theme="claro"] [class*="border-zinc-700"],
+:root[data-theme="claro"] [class*="border-zinc-800"],
+:root[data-theme="claro"] [class*="border-zinc-900"] {
+  border-color: #e9b0f2 !important;
+}
+
+:root[data-theme="claro"] [class*="hover:bg-zinc-800"]:hover,
+:root[data-theme="claro"] [class*="hover:bg-zinc-700"]:hover {
+  background-color: #dce4f9 !important;
+}
+
+:root[data-theme="claro"] [class*="hover:text-white"]:hover {
+  color: #3d3540 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-red-900"],
+:root[data-theme="claro"] [class*=" bg-red-900"] {
+  background-color: #ffe4e1 !important;
+}
+
+:root[data-theme="claro"] [class*="text-red-300"] {
+  color: #8f3434 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-green-900"],
+:root[data-theme="claro"] [class*=" bg-green-900"] {
+  background-color: #dcf9e4 !important;
+}
+
+:root[data-theme="claro"] [class*="text-green-300"] {
+  color: #285d38 !important;
+}
+
+:root[data-theme="claro"] [class^="bg-yellow-900"],
+:root[data-theme="claro"] [class*=" bg-yellow-900"],
+:root[data-theme="claro"] [class^="bg-amber-900"],
+:root[data-theme="claro"] [class*=" bg-amber-900"] {
+  background-color: #fff4e1 !important;
+}
+
+:root[data-theme="claro"] [class*="text-yellow-300"],
+:root[data-theme="claro"] [class*="text-amber-300"] {
+  color: #66512c !important;
+}
+
+:root[data-theme="claro"] input,
+:root[data-theme="claro"] textarea,
+:root[data-theme="claro"] select {
+  color: #3d3540;
+  color-scheme: light !important;
+}
+
+/* Tema claro: ajusta los bordes de la cuadrícula sin modificar los fondos de las celdas. */
+:root[data-theme="claro"] .calendar-grid-lines,
+:root[data-theme="claro"] .calendar-day-cell {
+  border-color: #dadce0 !important;
+}
+
+:root[data-theme="claro"] .calendar-shell {
+  background-color: #f8f9fa !important;
+}
+
+:root[data-theme="claro"] .calendar-header {
+  background-color: #f8f9fa !important;
+}
+
+:root[data-theme="claro"] .calendar-day[class*="!bg-zinc-700"] {
+  background-color: #f1f3f4 !important;
+}
+
+:root[data-theme="claro"] .calendar-day[class*="!bg-zinc-800"] {
+  background-color: #ffffff !important;
+}
+
+:root[data-theme="claro"] .calendar-day[class*="!bg-teal-950"] {
+  background-color: #dcf9e4 !important;
+}
+
+:root[data-theme="claro"] .calendar-day--today {
+  background-color: #dce4f9 !important;
+}
+
+:root[data-theme="claro"] .calendar-day[class*="bg-blue-950"] {
+  background-color: #b0c2f2 !important;
+}
+
+:root[data-theme="claro"] .calendar-day[class*="ring-blue-500"] {
+  --tw-ring-color: #607dbd !important;
+}
+
+:root[data-theme="claro"] .calendar-day.opacity-40 {
+  opacity: 0.7;
+}
+
+:root[data-theme="claro"] .calendar-day--muted {
+  opacity: 0.62;
+}
+
+:root[data-theme="claro"] .calendar-day-number--outside {
+  color: #9ca3af;
+}
+
+:root[data-theme="claro"] .calendar-day--today {
+  background-color: #dce4f9 !important;
+}
+
+:root[data-theme="claro"] .calendar-day-number--today {
+  background-color: #4b6fc2;
+  color: #ffffff !important;
+}
+
+:root[data-theme="claro"] .calendar-day:hover {
+  background-color: #e8edf7 !important;
 }

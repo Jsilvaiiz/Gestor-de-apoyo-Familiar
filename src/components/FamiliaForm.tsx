@@ -27,7 +27,6 @@ export default function FamiliaForm() {
 
         setMensaje("Familia registrada correctamente");
         setEsError(false);
-        window.dispatchEvent(new Event("familias-actualizadas"));
 
         setNombre("");
         setRepresentante("");

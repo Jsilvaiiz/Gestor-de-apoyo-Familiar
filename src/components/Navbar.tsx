@@ -1,19 +1,13 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   CalendarDays,
-  Ellipsis,
-  Tags,
+  Menu,
 } from "lucide-react";
 import SnippetAlertas from "./SnippetAlertas";
+import BarraLateral, { type Vista } from "./BarraLateral";
 import type { SesionProgramada } from "../utils/rutaRegular";
-
-type Vista =
-  | "calendario"
-  | "FamiliaList"
-  | "FamiliaForm"
-  | "AdministradorEtiquetas";
 
 interface NavbarProps {
   vistaActual: Vista;
@@ -32,56 +26,7 @@ export function Navbar({
   onIrASesion,
   onIrAEtiqueta,
 }: NavbarProps) {
-  const [menuAbierto, setMenuAbierto] = useState(false);
-
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar el menú al hacer clic fuera de él
-  useEffect(() => {
-    function cerrarAlHacerClicFuera(event: MouseEvent) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node)
-      ) {
-        setMenuAbierto(false);
-      }
-    }
-
-    document.addEventListener(
-      "mousedown",
-      cerrarAlHacerClicFuera
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        cerrarAlHacerClicFuera
-      );
-    };
-  }, []);
-
-  // Cerrar menú al presionar Escape
-  useEffect(() => {
-    function cerrarConEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuAbierto(false);
-      }
-    }
-
-    document.addEventListener("keydown", cerrarConEscape);
-
-    return () => {
-      document.removeEventListener(
-        "keydown",
-        cerrarConEscape
-      );
-    };
-  }, []);
-
-  function cambiarVista(vista: Vista) {
-    onCambiarVista(vista);
-    setMenuAbierto(false);
-  }
+  const [barraLateralAbierta, setBarraLateralAbierta] = useState(false);
 
   const formatoFecha = (fecha: Date) => {
     const dia = fecha.getDate();
@@ -102,25 +47,28 @@ export function Navbar({
     FamiliaList: "Familias",
     FamiliaForm: "Registrar familias",
     AdministradorEtiquetas: "Administrar etiquetas",
+    VisitasList: "Lista de visitas",
   };
 
-  const estiloBoton = (activo: boolean) =>
-    `flex items-center gap-2 rounded-lg px-3 py-2 text-sm
-     transition-colors !border-0 !shadow-none
-     ${
-       activo
-         ? "!bg-zinc-800 text-white"
-         : "!bg-transparent text-zinc-300 hover:!bg-zinc-800 hover:text-white"
-     }`;
-
   return (
-    <nav className="grid w-full shrink-0 grid-cols-3 items-center gap-3 border-b border-zinc-800 bg-neutral-900 px-5 py-3 text-white">
+    <>
+    <nav className="grid w-full shrink-0 grid-cols-3 items-center gap-3 !rounded-none bg-neutral-900 px-5 py-3 text-white">
 
       <div className="flex min-w-0 items-center gap-2 text-left">
         <button
           type="button"
+          onClick={() => setBarraLateralAbierta(true)}
+          aria-label="Abrir navegación"
+          aria-expanded={barraLateralAbierta}
+          aria-haspopup="dialog"
+          title="Abrir navegación"
+          className="!border-0 !bg-transparent !p-2 !shadow-none text-zinc-300 hover:text-white"
+        >
+          <Menu size={20} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
           onClick={() => {
-            setMenuAbierto(false);
             onVolverAHoy();
           }}
           title="Volver al calendario de hoy"
@@ -151,86 +99,24 @@ export function Navbar({
       </div>
 
       <div className="flex items-center justify-end gap-2">
-
         <button
           type="button"
-          onClick={() => cambiarVista("calendario")}
+          onClick={() => onCambiarVista("calendario")}
           aria-label="Ir al calendario"
           title="Calendario"
-          className={estiloBoton(vistaActual === "calendario")}
+          className="!border-0 !bg-transparent !p-2 !shadow-none text-zinc-300 hover:text-white"
         >
           <CalendarDays size={18} aria-hidden="true" />
         </button>
-
-        <div className="relative" ref={menuRef}>
-
-          <button
-            type="button"
-            title="Más opciones"
-            aria-label="Abrir herramientas"
-            aria-expanded={menuAbierto}
-            aria-haspopup="menu"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            className={estiloBoton(
-              menuAbierto ||
-                vistaActual === "AdministradorEtiquetas" ||
-                vistaActual === "FamiliaList" ||
-                vistaActual === "FamiliaForm"
-            )}
-          >
-            <Ellipsis size={20} aria-hidden="true" />
-          </button>
-
-          {menuAbierto && (
-            <div
-              role="menu"
-              aria-label="Herramientas"
-              className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-zinc-700 bg-neutral-900 p-2 shadow-xl"
-            >
-              <p className="px-3 py-2 text-xs font-medium text-zinc-400">
-                Herramientas
-              </p>
-
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() =>
-                  cambiarVista("AdministradorEtiquetas")
-                }
-                className="flex w-full items-center gap-2 rounded-lg !border-0 !bg-transparent px-3 py-2 text-left text-sm text-zinc-200 !shadow-none hover:!bg-zinc-800 hover:text-white"
-              >
-                <Tags size={17} aria-hidden="true" />
-                <span>Administrar etiquetas</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() =>
-                  cambiarVista("FamiliaList")
-                }
-                className="flex w-full items-center gap-2 rounded-lg !border-0 !bg-transparent px-3 py-2 text-left text-sm text-zinc-200 !shadow-none hover:!bg-zinc-800 hover:text-white"
-              >
-                <Tags size={17} aria-hidden="true" />
-                <span>Administrar Familias</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() =>
-                  cambiarVista("FamiliaForm")
-                }
-                className="flex w-full items-center gap-2 rounded-lg !border-0 !bg-transparent px-3 py-2 text-left text-sm text-zinc-200 !shadow-none hover:!bg-zinc-800 hover:text-white"
-              >
-                <Tags size={17} aria-hidden="true" />
-                <span>Registrar Familias</span>
-              </button>
-
-            </div>
-          )}
-        </div>
-
       </div>
     </nav>
+    <BarraLateral
+      abierta={barraLateralAbierta}
+      vistaActual={vistaActual}
+      onCambiarVista={onCambiarVista}
+      onCerrar={() => setBarraLateralAbierta(false)}
+    />
+    </>
   );
 }
 

@@ -202,7 +202,7 @@ function CalendarioContenido({
           {tarjetaArrastrada.nombre}
         </div>
       )}
-      <div className="group relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-zinc-900">
+      <div className="calendar-shell group relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-zinc-900">
         
         
 
@@ -300,7 +300,7 @@ function CalendarioContenido({
 
         <div
           ref={calendarioGridRef}
-          className="grid min-h-0 flex-1 grid-rows-6 gap-px bg-zinc-800/40"
+          className="calendar-grid-lines grid min-h-0 flex-1 grid-rows-6 border-l-[0.5px] border-t-[0.5px]"
         >
           {Array.from({ length: 6 }, (_, weekIndex) => {
             const weekDays = calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7)
@@ -321,7 +321,7 @@ function CalendarioContenido({
             return (
               <div
                 key={weekKey}
-                className="grid min-h-0 grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,0.65fr)_minmax(0,0.65fr)] gap-px bg-zinc-800/40"
+                className="grid min-h-0 grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,0.65fr)_minmax(0,0.65fr)]"
               >
                 {weekDays.map((date) => {
                   const dateKey = toDateKey(date)
@@ -334,10 +334,10 @@ function CalendarioContenido({
                   const etiquetasDelDia = etiquetasCalendario.filter(
                     (etiqueta) => etiqueta.fecha === dateKey
                   )
-                  const fondoDia = isWeekend
-                    ? '!bg-zinc-700'
-                    : isToday
-                      ? '!bg-[#0C3956]'
+                  const fondoDia = isToday
+                    ? '!bg-[#0C3956]'
+                    : isWeekend
+                      ? '!bg-zinc-700'
                       : sesionesSemana.length > 0
                         ? '!bg-teal-950/70'
                         : '!bg-zinc-800'
@@ -352,7 +352,7 @@ function CalendarioContenido({
                     <div
                       key={dateKey}
                       data-calendar-date={dateKey}
-                      className={`relative min-h-0 min-w-0 ${
+                      className={`calendar-day-cell relative min-h-0 min-w-0 border-b-[0.5px] border-r-[0.5px] ${
                         [
                           ...(sesionesDelDia.some((sesion) => getSesionKey(sesion) === sesionAbiertaKey)
                             ? ['z-30']
@@ -372,13 +372,19 @@ function CalendarioContenido({
                         aria-pressed={selectedDateKey === dateKey}
                         title={title || undefined}
                         onClick={() => onSelectDate(date)}
-                        className={`absolute inset-0 flex w-full flex-col items-start justify-start outline-none border-none rounded-none! shadow-none! ${fondoDia} p-1 text-left transition hover:bg-zinc-800 ${
-                          isCurrentMonth ? 'text-white' : 'text-zinc-400 opacity-40'
+                        className={`calendar-day absolute inset-0 flex w-full flex-col items-start justify-start outline-none border-none rounded-none! shadow-none! ${fondoDia} p-1 text-left transition hover:bg-zinc-800 ${
+                          isCurrentMonth ? 'text-white' : 'text-zinc-400'
+                        } ${
+                          isWeekend ? 'calendar-day--muted' : ''
                         } ${selectedDateKey === dateKey ? 'bg-blue-950/60 ring-2 ring-inset ring-blue-500' : ''}`}
                       >
                         <span
-                          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-none text-xs ${
-                            isToday ? 'font-bold text-white' : ''
+                          className={`calendar-day-number inline-flex h-6 w-6 shrink-0 items-center justify-center text-xs ${
+                            isToday
+                              ? 'calendar-day-number--today rounded-full font-bold text-white'
+                              : !isCurrentMonth
+                                ? 'calendar-day-number--outside rounded-none'
+                                : 'rounded-none'
                           }`}
                         >
                           {date.getDate()}
