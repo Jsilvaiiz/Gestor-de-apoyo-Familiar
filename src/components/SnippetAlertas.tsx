@@ -162,7 +162,7 @@ export default function SnippetAlertas({
                   </p>
                   {alertas.atrasadas.map((sesion) => (
                     <AlertaSesion
-                      key={`${sesion.familia.id}-${sesion.numeroSesion}`}
+                      key={`${sesion.familia.id}-${sesion.fecha.toISOString()}-${sesion.esAPS}-${sesion.esASL}`}
                       sesion={sesion}
                       atrasada
                       onSeleccionar={() => {
@@ -180,7 +180,7 @@ export default function SnippetAlertas({
                   </p>
                   {alertas.proximas.map((sesion) => (
                     <AlertaSesion
-                      key={`${sesion.familia.id}-${sesion.numeroSesion}`}
+                      key={`${sesion.familia.id}-${sesion.fecha.toISOString()}-${sesion.esAPS}-${sesion.esASL}`}
                       sesion={sesion}
                       atrasada={false}
                       onSeleccionar={() => {
@@ -282,7 +282,10 @@ function AlertaSesion({
       <span className="min-w-0">
         <span className="block truncate">{sesion.familia.nombre}</span>
         <span className={`block text-[10px] ${atrasada ? 'text-red-400' : 'text-zinc-400'}`}>
-          Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
+          {sesion.esAPS &&
+            `APS · Sesión ${sesion.numeroSesion} · ${NOMBRE_ETAPA[sesion.etapa]} · Mes ${sesion.numeroMes}`}
+          {sesion.esAPS && sesion.esASL ? " · " : ""}
+          {sesion.esASL && `ASL · Mes ${sesion.numeroMesASL}`}
         </span>
       </span>
       <span className={`shrink-0 text-[10px] ${atrasada ? 'text-red-400' : 'text-zinc-400'}`}>

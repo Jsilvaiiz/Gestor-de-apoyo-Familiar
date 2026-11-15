@@ -28,6 +28,9 @@ export interface Familia {
   fechaInicio?: string;
   sesionesReprogramadas?: SesionReprogramada[];
   sesionesRealizadas?: string[];
+  primerMesASL?: 4 | 5 | 6;
+  sesionesASLReprogramadas?: SesionReprogramada[];
+  sesionesASLRealizadas?: string[];
   archivada?: boolean;
   etiquetas?: string[];
   observaciones?: Observacion[];
@@ -154,35 +157,76 @@ export async function cambiarEstadoFamilia(
   await escribirFamilias(familias);
 }
 
+function actualizarReprogramacion(
+  reprogramadas: SesionReprogramada[],
+  fechaOriginal: string,
+  fechaNueva: string
+): SesionReprogramada[] {
+  const restantes = reprogramadas.filter(
+    (sesion) => sesion.fechaOriginal !== fechaOriginal
+  );
+  if (fechaOriginal !== fechaNueva) {
+    restantes.push({ fechaOriginal, fechaNueva });
+  }
+  return restantes;
+}
+
+export async function reprogramarVisitaFamilia(
+  id: string,
+  fechasOriginales: { aps?: string; asl?: string },
+  fechaNueva: string
+): Promise<Familia> {
+  if (!esFechaValida(fechaNueva)) {
+    throw new Error("La fecha nueva de la visita no es válida");
+  }
+  if (
+    (!fechasOriginales.aps && !fechasOriginales.asl) ||
+    (fechasOriginales.aps && !esFechaValida(fechasOriginales.aps)) ||
+    (fechasOriginales.asl && !esFechaValida(fechasOriginales.asl))
+  ) {
+    throw new Error("La visita no tiene una fecha original válida");
+  }
+
+  const familias = await leerFamilias();
+  const indice = familias.findIndex((familia) => familia.id === id);
+  if (indice === -1) {
+    throw new Error("No se encontró la familia");
+  }
+
+  const familiaActualizada = { ...familias[indice] };
+  if (fechasOriginales.aps) {
+    familiaActualizada.sesionesReprogramadas = actualizarReprogramacion(
+      familiaActualizada.sesionesReprogramadas ?? [],
+      fechasOriginales.aps,
+      fechaNueva
+    );
+  }
+  if (fechasOriginales.asl) {
+    familiaActualizada.sesionesASLReprogramadas = actualizarReprogramacion(
+      familiaActualizada.sesionesASLReprogramadas ?? [],
+      fechasOriginales.asl,
+      fechaNueva
+    );
+  }
+  familias[indice] = familiaActualizada;
+  await escribirFamilias(familias);
+  return familiaActualizada;
+}
+
 export async function reprogramarSesionFamilia(
   id: string,
   fechaOriginal: string,
   fechaNueva: string
 ): Promise<Familia> {
-  if (!esFechaValida(fechaOriginal) || !esFechaValida(fechaNueva)) {
-    throw new Error("La fecha de la sesión no es válida");
+  if (!esFechaValida(fechaOriginal)) {
+    throw new Error("La fecha original de la sesión no es válida");
   }
 
-  const familias = await leerFamilias();
-  const indice = familias.findIndex((familia) => familia.id === id);
-
-  if (indice === -1) {
-    throw new Error("No se encontró la familia");
-  }
-
-  const familia = familias[indice];
-  const sesionesReprogramadas = (familia.sesionesReprogramadas ?? []).filter(
-    (sesion) => sesion.fechaOriginal !== fechaOriginal
+  const familiaActualizada = await reprogramarVisitaFamilia(
+    id,
+    { aps: fechaOriginal },
+    fechaNueva
   );
-
-  if (fechaOriginal !== fechaNueva) {
-    sesionesReprogramadas.push({ fechaOriginal, fechaNueva });
-  }
-
-  const familiaActualizada = { ...familia, sesionesReprogramadas };
-  familias[indice] = familiaActualizada;
-  await escribirFamilias(familias);
-
   return familiaActualizada;
 }
 
@@ -237,6 +281,24 @@ export async function actualizarEstadoSesionFamilia(
   if (!esFechaValida(fechaOriginal)) {
     throw new Error("La fecha original de la sesión no es válida");
   }
+  return actualizarEstadoVisitaFamilia(
+    familiaId,
+    { aps: fechaOriginal },
+    realizada
+  );
+}
+
+export async function actualizarEstadoVisitaFamilia(
+  familiaId: string,
+  fechasOriginales: { aps?: string; asl?: string },
+  realizada: boolean
+): Promise<Familia> {
+  const fechas = [fechasOriginales.aps, fechasOriginales.asl].filter(
+    (fecha): fecha is string => fecha !== undefined
+  );
+  if (fechas.length === 0 || fechas.some((fecha) => !esFechaValida(fecha))) {
+    throw new Error("La visita no tiene fechas originales válidas");
+  }
 
   const familias = await leerFamilias();
   const indiceFamilia = familias.findIndex((familia) => familia.id === familiaId);
@@ -245,17 +307,19 @@ export async function actualizarEstadoSesionFamilia(
   }
 
   const familia = familias[indiceFamilia];
-  const sesionesRealizadas = new Set(familia.sesionesRealizadas ?? []);
-  if (realizada) {
-    sesionesRealizadas.add(fechaOriginal);
-  } else {
-    sesionesRealizadas.delete(fechaOriginal);
+  const familiaActualizada = { ...familia };
+  if (fechasOriginales.aps) {
+    const realizadas = new Set(familiaActualizada.sesionesRealizadas ?? []);
+    if (realizada) realizadas.add(fechasOriginales.aps);
+    else realizadas.delete(fechasOriginales.aps);
+    familiaActualizada.sesionesRealizadas = [...realizadas];
   }
-
-  const familiaActualizada = {
-    ...familia,
-    sesionesRealizadas: [...sesionesRealizadas],
-  };
+  if (fechasOriginales.asl) {
+    const realizadas = new Set(familiaActualizada.sesionesASLRealizadas ?? []);
+    if (realizada) realizadas.add(fechasOriginales.asl);
+    else realizadas.delete(fechasOriginales.asl);
+    familiaActualizada.sesionesASLRealizadas = [...realizadas];
+  }
   familias[indiceFamilia] = familiaActualizada;
   await escribirFamilias(familias);
   return familiaActualizada;

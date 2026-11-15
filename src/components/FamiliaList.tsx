@@ -167,6 +167,7 @@ export default function FamiliaList() {
         telefono: editando.telefono,
         direccion: editando.direccion,
         fechaInicio: editando.fechaInicio,
+        primerMesASL: editando.primerMesASL ?? 5,
       });
 
       setEditando(null);
@@ -550,6 +551,26 @@ export default function FamiliaList() {
                                 style={{ colorScheme: "dark" }}
                                 className="mt-1 block w-full rounded-lg bg-zinc-800 p-2"
                               />
+                            </label>
+
+                            <label className="block text-sm">
+                              Primer mes de visita ASL
+                              <select
+                                value={editando.primerMesASL ?? 5}
+                                onChange={(e) => {
+                                  const valor = e.target.value;
+                                  setEditando({
+                                    ...editando,
+                                    primerMesASL:
+                                      valor === "4" ? 4 : valor === "6" ? 6 : 5,
+                                  });
+                                }}
+                                className="mt-1 block w-full rounded-lg bg-zinc-800 p-2"
+                              >
+                                <option value={4}>Mes 4</option>
+                                <option value={5}>Mes 5 (predeterminado)</option>
+                                <option value={6}>Mes 6</option>
+                              </select>
                             </label>
 
                             {mensajeEdicion && (

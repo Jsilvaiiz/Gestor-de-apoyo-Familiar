@@ -6,14 +6,16 @@ import {
   type SesionProgramada,
 } from '../utils/rutaRegular'
 import {
-  reprogramarSesionFamilia,
+  reprogramarVisitaFamilia,
   type Familia,
 } from '../utils/familias'
 
 interface SesionArrastrada {
   familiaId: string
-  etapa: EtapaRutaRegular
-  fechaOriginal: string
+  esAPS: boolean
+  esASL: boolean
+  fechaOriginalAPS?: string
+  fechaOriginalASL?: string
 }
 
 interface ArrastrePuntero {
@@ -112,16 +114,26 @@ export function useCalendarSessionDrag({
           const sesionExiste = [...sesionesActuales.values()].flat().some(
             (sesion) =>
               sesion.familia.id === arrastre.sesion.familiaId &&
-              sesion.etapa === arrastre.sesion.etapa &&
-              toDateKey(sesion.fechaOriginal) === arrastre.sesion.fechaOriginal
+              sesion.esAPS === arrastre.sesion.esAPS &&
+              sesion.esASL === arrastre.sesion.esASL &&
+              (!arrastre.sesion.fechaOriginalAPS ||
+                toDateKey(sesion.fechaOriginal) ===
+                  arrastre.sesion.fechaOriginalAPS) &&
+              (!arrastre.sesion.fechaOriginalASL ||
+                (sesion.fechaOriginalASL !== undefined &&
+                  toDateKey(sesion.fechaOriginalASL) ===
+                    arrastre.sesion.fechaOriginalASL))
           )
           if (!sesionExiste) {
             throw new Error('La sesión ya no está disponible')
           }
 
-          const familiaActualizada = await reprogramarSesionFamilia(
+          const familiaActualizada = await reprogramarVisitaFamilia(
             arrastre.sesion.familiaId,
-            arrastre.sesion.fechaOriginal,
+            {
+              aps: arrastre.sesion.fechaOriginalAPS,
+              asl: arrastre.sesion.fechaOriginalASL,
+            },
             fechaDestino
           )
           callbacksRef.current.onFamiliaActualizada(familiaActualizada)
@@ -161,8 +173,14 @@ export function useCalendarSessionDrag({
       pointerId: event.pointerId,
       sesion: {
         familiaId: sesion.familia.id,
-        etapa: sesion.etapa,
-        fechaOriginal: toDateKey(sesion.fechaOriginal),
+        esAPS: sesion.esAPS,
+        esASL: sesion.esASL,
+        fechaOriginalAPS: sesion.esAPS
+          ? toDateKey(sesion.fechaOriginal)
+          : undefined,
+        fechaOriginalASL: sesion.fechaOriginalASL
+          ? toDateKey(sesion.fechaOriginalASL)
+          : undefined,
       },
       xInicial: event.clientX,
       yInicial: event.clientY,

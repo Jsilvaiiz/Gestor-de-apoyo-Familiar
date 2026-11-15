@@ -46,7 +46,13 @@ function toDateKey(date: Date) {
 }
 
 function getSesionKey(sesion: SesionProgramada) {
-  return `${sesion.familia.id}:${toDateKey(sesion.fechaOriginal)}`
+  return [
+    sesion.familia.id,
+    sesion.esAPS ? toDateKey(sesion.fechaOriginal) : '-',
+    sesion.esASL && sesion.fechaOriginalASL
+      ? toDateKey(sesion.fechaOriginalASL)
+      : '-',
+  ].join(':')
 }
 
 function CalendarioContenido({
@@ -308,8 +314,15 @@ function CalendarioContenido({
             const sesionesSemana = sesionesPorSemana.get(weekKey) ?? []
             const etapasSemana = calcularEtapasRutaRegular(familiasVisibles, weekDays[0])
             const detalleSesiones = sesionesSemana
-              .map(({ familia, etapa, numeroMes }) =>
-                `${familia.nombre} (${NOMBRE_ETAPA[etapa]}, mes ${numeroMes})`
+              .map((sesion) =>
+                `${sesion.familia.nombre} (${[
+                  sesion.esAPS
+                    ? `APS: sesión ${sesion.numeroSesion}, ${NOMBRE_ETAPA[sesion.etapa]}, mes ${sesion.numeroMes}`
+                    : null,
+                  sesion.esASL ? `ASL: mes ${sesion.numeroMesASL}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")})`
               )
               .join(', ')
             const detalleEtapas = etapasSemana
@@ -374,6 +387,8 @@ function CalendarioContenido({
                         onClick={() => onSelectDate(date)}
                         className={`calendar-day absolute inset-0 flex w-full flex-col items-start justify-start outline-none border-none rounded-none! shadow-none! ${fondoDia} p-1 text-left transition hover:bg-zinc-800 ${
                           isCurrentMonth ? 'text-white' : 'text-zinc-400'
+                        } ${
+                          !isCurrentMonth && !isToday ? 'calendar-day--outside' : ''
                         } ${
                           isWeekend ? 'calendar-day--muted' : ''
                         } ${selectedDateKey === dateKey ? 'bg-blue-950/60 ring-2 ring-inset ring-blue-500' : ''}`}

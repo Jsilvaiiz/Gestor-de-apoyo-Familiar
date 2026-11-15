@@ -31,6 +31,11 @@
   opacity: 0.62;
 }
 
+.calendar-day--outside {
+  opacity: 0.48;
+  background-color: #18181b !important;
+}
+
 .calendar-day-number--outside {
   color: #71717a;
 }
@@ -284,7 +289,7 @@ button {
   color-scheme: light !important;
 }
 
-/* Tema claro: ajusta los bordes de la cuadrícula sin modificar los fondos de las celdas. */
+/* Tema claro*/
 :root[data-theme="claro"] .calendar-grid-lines,
 :root[data-theme="claro"] .calendar-day-cell {
   border-color: #dadce0 !important;
@@ -328,6 +333,11 @@ button {
 
 :root[data-theme="claro"] .calendar-day--muted {
   opacity: 0.62;
+}
+
+:root[data-theme="claro"] .calendar-day--outside {
+  opacity: 0.58;
+  background-color: #eef0f3 !important;
 }
 
 :root[data-theme="claro"] .calendar-day-number--outside {

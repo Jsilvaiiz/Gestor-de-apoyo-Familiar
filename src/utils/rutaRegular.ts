@@ -8,6 +8,12 @@ export interface SesionProgramada {
   fecha: Date
   fechaOriginal: Date
   realizada: boolean
+  esAPS: boolean
+  esASL: boolean
+  realizadaAPS?: boolean
+  realizadaASL?: boolean
+  fechaOriginalASL?: Date
+  numeroMesASL?: number
 }
 
 export type EtapaRutaRegular = 1 | 2 | 3 | 4
@@ -121,33 +127,68 @@ export function calcularEtapasRutaRegular(
 export function calcularSesionesRutaRegular(
   familias: Familia[]
 ): Map<string, SesionProgramada[]> {
-  const sesiones = new Map<string, SesionProgramada[]>()
+  const visitas = new Map<string, SesionProgramada>()
   const agregarSesion = (
     familia: Familia,
     fechaOriginal: Date,
     etapa: EtapaRutaRegular,
     numeroSesion: number,
-    numeroMes: number
+    numeroMes: number,
+    tipo: 'APS' | 'ASL'
   ) => {
     const fechaOriginalKey = toDateKey(fechaOriginal)
-    const fechaReprogramada = familia.sesionesReprogramadas?.find(
+    const reprogramaciones =
+      tipo === 'APS'
+        ? familia.sesionesReprogramadas
+        : familia.sesionesASLReprogramadas
+    const fechaReprogramada = reprogramaciones?.find(
       (sesion) => sesion.fechaOriginal === fechaOriginalKey
     )
     const fecha = fechaReprogramada
       ? parseDateKey(fechaReprogramada.fechaNueva) ?? fechaOriginal
       : fechaOriginal
-    const semanaKey = toDateKey(mondayOf(fecha))
-    const sesionesSemana = sesiones.get(semanaKey) ?? []
-    sesionesSemana.push({
+    const clave = `${familia.id}:${toDateKey(fecha)}`
+    const existente = visitas.get(clave)
+    const realizada =
+      tipo === 'APS'
+        ? familia.sesionesRealizadas?.includes(fechaOriginalKey) ?? false
+        : familia.sesionesASLRealizadas?.includes(fechaOriginalKey) ?? false
+
+    if (existente) {
+      if (tipo === 'APS') {
+        existente.esAPS = true
+        existente.realizadaAPS = realizada
+        existente.numeroSesion = numeroSesion
+        existente.numeroMes = numeroMes
+        existente.etapa = etapa
+        existente.fechaOriginal = new Date(fechaOriginal)
+      } else {
+        existente.esASL = true
+        existente.realizadaASL = realizada
+        existente.fechaOriginalASL = new Date(fechaOriginal)
+        existente.numeroMesASL = numeroMes
+      }
+      existente.realizada =
+        (!existente.esAPS || existente.realizadaAPS === true) &&
+        (!existente.esASL || existente.realizadaASL === true)
+      return
+    }
+
+    visitas.set(clave, {
       familia,
       etapa,
-      numeroSesion,
+      numeroSesion: tipo === 'APS' ? numeroSesion : 0,
       numeroMes,
       fecha: new Date(fecha),
       fechaOriginal: new Date(fechaOriginal),
-      realizada: familia.sesionesRealizadas?.includes(fechaOriginalKey) ?? false,
+      realizada,
+      esAPS: tipo === 'APS',
+      esASL: tipo === 'ASL',
+      realizadaAPS: tipo === 'APS' ? realizada : undefined,
+      realizadaASL: tipo === 'ASL' ? realizada : undefined,
+      fechaOriginalASL: tipo === 'ASL' ? new Date(fechaOriginal) : undefined,
+      numeroMesASL: tipo === 'ASL' ? numeroMes : undefined,
     })
-    sesiones.set(semanaKey, sesionesSemana)
   }
 
   for (const familia of familias) {
@@ -156,7 +197,7 @@ export function calcularSesionesRutaRegular(
     const fechaInicio = parseDateKey(familia.fechaInicio)
     if (!fechaInicio) continue
 
-    agregarSesion(familia, fechaInicio, 1, 1, 1)
+    agregarSesion(familia, fechaInicio, 1, 1, 1, 'APS')
 
     const inicioEtapaDos = sumarMeses(fechaInicio, 1)
     for (let indiceSesion = 0; indiceSesion < SESIONES_POR_ETAPA[2]; indiceSesion += 1) {
@@ -166,7 +207,8 @@ export function calcularSesionesRutaRegular(
         fechaSesion,
         2,
         SESIONES_POR_ETAPA[1] + indiceSesion + 1,
-        obtenerNumeroMes(fechaInicio, fechaSesion) ?? 2
+        obtenerNumeroMes(fechaInicio, fechaSesion) ?? 2,
+        'APS'
       )
     }
 
@@ -177,7 +219,8 @@ export function calcularSesionesRutaRegular(
         sumarMeses(fechaInicio, numeroMes - 1),
         3,
         SESIONES_POR_ETAPA[1] + SESIONES_POR_ETAPA[2] + indiceSesion + 1,
-        numeroMes
+        numeroMes,
+        'APS'
       )
     }
 
@@ -189,8 +232,30 @@ export function calcularSesionesRutaRegular(
         SESIONES_POR_ETAPA[2] +
         SESIONES_POR_ETAPA[3] +
         1,
-      24
+      24,
+      'APS'
     )
+
+    const mesesASL = [familia.primerMesASL ?? 5, 8, 13, 19, 24] as const
+    for (const numeroMes of mesesASL) {
+      const fechaASL = sumarMeses(fechaInicio, numeroMes - 1)
+      agregarSesion(
+        familia,
+        fechaASL,
+        etapaPorMes(numeroMes),
+        0,
+        numeroMes,
+        'ASL'
+      )
+    }
+  }
+
+  const sesiones = new Map<string, SesionProgramada[]>()
+  for (const visita of visitas.values()) {
+    const semanaKey = toDateKey(mondayOf(visita.fecha))
+    const sesionesSemana = sesiones.get(semanaKey) ?? []
+    sesionesSemana.push(visita)
+    sesiones.set(semanaKey, sesionesSemana)
   }
 
   return sesiones

@@ -25,7 +25,7 @@ export default function BarraInferior() {
           onClick={() => setTemaClaro((temaActual) => !temaActual)}
           aria-label={temaClaro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
           title={temaClaro ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
-          className="!border-0 !bg-transparent !p-0 !shadow-none text-zinc-400 hover:text-white"
+          className="!border-0 !bg-transparent !p-0 !shadow-none text-zinc-200 hover:text-white"
         >
           {temaClaro ? (
             <Moon size={16} aria-hidden="true" />

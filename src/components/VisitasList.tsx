@@ -173,7 +173,7 @@ export default function VisitasList({
 
                   return (
                     <article
-                      key={`${sesion.familia.id}-${fechaClave(sesion.fechaOriginal)}`}
+                      key={`${sesion.familia.id}-${fechaClave(sesion.fecha)}-${sesion.esAPS}-${sesion.esASL}`}
                       className="space-y-4 p-4"
                     >
                       {/*Datos de identificación y contacto de la familia. */}
@@ -222,10 +222,26 @@ export default function VisitasList({
                         aria-label="Detalles de la visita"
                         className="border-l-2 border-zinc-700 pl-3"
                       >
-                        <h3 className="text-sm font-semibold text-zinc-200">
-                          Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} ·
-                          {" "}Mes {sesion.numeroMes}
-                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {sesion.esAPS && (
+                            <span className="bg-blue-700 px-2 py-0.5 text-xs font-semibold text-white">
+                              APS
+                            </span>
+                          )}
+                          {sesion.esASL && (
+                            <span className="bg-purple-700 px-2 py-0.5 text-xs font-semibold text-white">
+                              ASL
+                            </span>
+                          )}
+                          <h3 className="text-sm font-semibold text-zinc-200">
+                            {sesion.esAPS
+                              ? `Sesión ${sesion.numeroSesion} · ${NOMBRE_ETAPA[sesion.etapa]} · Mes ${sesion.numeroMes}`
+                              : `Visita ASL · Mes ${sesion.numeroMesASL}`}
+                            {sesion.esAPS &&
+                              sesion.esASL &&
+                              ` · ASL Mes ${sesion.numeroMesASL}`}
+                          </h3>
+                        </div>
                       </section>
 
                       {/* Sección editable: etiquetas de familia y comentarios asociados a la fecha. */}

@@ -34,6 +34,9 @@ export async function sincronizarFamiliasExcel(): Promise<void> {
     "Sesiones reprogramadas",
     "Sesiones realizadas",
     "Observaciones",
+    "Primer mes ASL",
+    "Sesiones ASL reprogramadas",
+    "Sesiones ASL realizadas",
   ]);
 
   for (const familia of familias) {
@@ -49,6 +52,9 @@ export async function sincronizarFamiliasExcel(): Promise<void> {
       JSON.stringify(familia.sesionesReprogramadas ?? []),
       (familia.sesionesRealizadas ?? []).join(", "),
       JSON.stringify(familia.observaciones ?? []),
+      familia.primerMesASL ?? 5,
+      JSON.stringify(familia.sesionesASLReprogramadas ?? []),
+      (familia.sesionesASLRealizadas ?? []).join(", "),
     ]);
   }
 

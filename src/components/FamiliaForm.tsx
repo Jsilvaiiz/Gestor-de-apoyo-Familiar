@@ -10,6 +10,7 @@ export default function FamiliaForm() {
   const [mensaje, setMensaje] = useState("");
   const [esError, setEsError] = useState(false);
   const [fechaInicio, setFechaInicio] = useState("");
+  const [primerMesASL, setPrimerMesASL] = useState<4 | 5 | 6>(5);
 
   
     const registrarFamilia = async (e: React.FormEvent) => {
@@ -23,6 +24,7 @@ export default function FamiliaForm() {
         telefono,
         direccion,
         fechaInicio,
+        primerMesASL,
         });
 
         setMensaje("Familia registrada correctamente");
@@ -33,6 +35,7 @@ export default function FamiliaForm() {
         setTelefono("");
         setDireccion("");
         setFechaInicio("");
+        setPrimerMesASL(5);
     } catch (error) {
         const mensaje =
         error instanceof Error ? error.message : String(error);
@@ -91,6 +94,22 @@ export default function FamiliaForm() {
             className="block w-full mt-2 p-3 bg-zinc-800 text-white rounded cursor-pointer"
             required
         />
+        </label>
+
+        <label className="text-left text-sm text-gray-300">
+          Primer mes de visita ASL
+          <select
+            value={primerMesASL}
+            onChange={(e) => {
+              const valor = e.target.value;
+              setPrimerMesASL(valor === "4" ? 4 : valor === "6" ? 6 : 5);
+            }}
+            className="mt-2 block w-full rounded bg-zinc-800 p-2"
+          >
+            <option value={4}>Mes 4</option>
+            <option value={5}>Mes 5 (predeterminado)</option>
+            <option value={6}>Mes 6</option>
+          </select>
         </label>
 
         <button

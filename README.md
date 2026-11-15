@@ -25,3 +25,12 @@ datos personales en texto legible. El JSON cifrado solo se puede descifrar con
 la misma cuenta de Windows en el mismo equipo. Antes de cambiar de equipo o
 cuenta, prepara un respaldo seguro: el JSON cifrado no se podrá abrir allí y el
 Excel contiene los datos en texto claro.
+
+## Rutas de visitas
+
+La ruta regular se identifica como APS. Cada familia también tiene visitas ASL
+en los meses 8, 13, 19 y 24, además de una primera visita seleccionable en el
+mes 4, 5 o 6 (predeterminado: 5). Cuando APS y ASL coinciden para una familia
+en la misma fecha, el calendario y las listas las muestran como una sola visita
+con ambas etiquetas. Reprogramar o marcar una visita combinada actualiza ambos
+registros.

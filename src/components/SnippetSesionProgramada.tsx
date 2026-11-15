@@ -6,7 +6,7 @@ import type {
 } from 'react'
 import type { Etiqueta } from '../utils/etiquetas'
 import {
-  actualizarEstadoSesionFamilia,
+  actualizarEstadoVisitaFamilia,
   editarObservacionFamilia,
   type Familia,
 } from '../utils/familias'
@@ -72,7 +72,27 @@ export default function SnippetSesionProgramada({
   )
   const fontSize = Math.max(8, Math.min(12, height * 0.42))
   const padding = Math.max(1, Math.min(4, height * 0.12))
-  const arrastrable = sesion.etapa !== 1
+  const arrastrable = sesion.esASL || sesion.etapa !== 1
+  const tiposVisita = [
+    sesion.esAPS ? 'APS' : null,
+    sesion.esASL ? 'ASL' : null,
+  ].filter((tipo): tipo is string => tipo !== null)
+  const mesRuta = sesion.esAPS && sesion.esASL
+    ? sesion.numeroMes === sesion.numeroMesASL
+      ? `Mes ${sesion.numeroMes}`
+      : `Mes APS ${sesion.numeroMes} · Mes ASL ${sesion.numeroMesASL}`
+    : sesion.esAPS
+      ? `Mes ${sesion.numeroMes}`
+      : `Mes ${sesion.numeroMesASL}`
+  const detalleRuta = [
+    tiposVisita.join(' + '),
+    sesion.esAPS
+      ? `Sesión ${sesion.numeroSesion} · ${NOMBRE_ETAPA[sesion.etapa]}`
+      : null,
+    mesRuta,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <div
@@ -81,14 +101,14 @@ export default function SnippetSesionProgramada({
     >
       <button
         type="button"
-        aria-label={`Ver sesión de ${sesion.familia.nombre}`}
+        aria-label={`Ver visita de ${sesion.familia.nombre}`}
         aria-haspopup="dialog"
         aria-expanded={abierta}
         onPointerDown={(event) => {
           if (arrastrable) onStartDrag(sesion, event)
         }}
         onClick={(event) => onClick(sesion, event)}
-        title={`${sesion.familia.nombre} · ${NOMBRE_ETAPA[sesion.etapa]}`}
+        title={`${sesion.familia.nombre} · ${detalleRuta}`}
         style={{
           backgroundColor: estilo.postIt,
           color: '#27272a',
@@ -114,6 +134,7 @@ export default function SnippetSesionProgramada({
       {abierta && (
         <SesionPopover
           sesion={sesion}
+          detalleRuta={detalleRuta}
           etiquetas={etiquetas}
           onFamiliaActualizada={onFamiliaActualizada}
           onCerrar={onCerrar}
@@ -125,6 +146,7 @@ export default function SnippetSesionProgramada({
 
 interface SesionPopoverProps {
   sesion: SesionProgramada
+  detalleRuta: string
   etiquetas: Etiqueta[]
   onFamiliaActualizada: (familia: Familia) => void
   onCerrar: () => void
@@ -132,6 +154,7 @@ interface SesionPopoverProps {
 
 function SesionPopover({
   sesion,
+  detalleRuta,
   etiquetas,
   onFamiliaActualizada,
   onCerrar,
@@ -185,9 +208,14 @@ function SesionPopover({
   async function cambiarEstadoSesion() {
     setErrorObservacion('')
     try {
-      const familiaActualizada = await actualizarEstadoSesionFamilia(
+      const familiaActualizada = await actualizarEstadoVisitaFamilia(
         sesion.familia.id,
-        toDateKey(sesion.fechaOriginal),
+        {
+          aps: sesion.esAPS ? toDateKey(sesion.fechaOriginal) : undefined,
+          asl: sesion.fechaOriginalASL
+            ? toDateKey(sesion.fechaOriginalASL)
+            : undefined,
+        },
         !sesion.realizada
       )
       onFamiliaActualizada(familiaActualizada)
@@ -232,7 +260,7 @@ function SesionPopover({
     <div
       ref={tarjetaRef}
       role="dialog"
-      aria-label={`Sesión de ${sesion.familia.nombre}`}
+      aria-label={`Visita de ${sesion.familia.nombre}`}
       className={`pointer-events-auto absolute bottom-full left-0 z-50 mb-1 w-48 max-w-[75vw] max-h-44 overflow-y-auto rounded-sm p-2 text-zinc-900 shadow-lg ${ETAPA_COLOR[sesion.etapa].nota}`}
       style={{ pointerEvents: 'auto' }}
       onMouseDown={(event) => event.stopPropagation()}
@@ -277,9 +305,7 @@ function SesionPopover({
               year: 'numeric',
             })}
           </p>
-          <p className="text-[9px] opacity-70">
-            Sesión {sesion.numeroSesion} · {NOMBRE_ETAPA[sesion.etapa]} · Mes {sesion.numeroMes}
-          </p>
+          <p className="text-[9px] opacity-70">{detalleRuta}</p>
         </div>
       </div>
 
